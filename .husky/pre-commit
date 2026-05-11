@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+# Run formatters + linters on staged files (lint-staged), then secret scan.
+# Skip with `git commit --no-verify` only when you have a documented reason.
+
+# 1. Formatters + linters scoped to staged files
+npx --no-install lint-staged || exit 1
+
+# 2. Secret scan — gitleaks. Falls back to a clear hint if the binary is missing.
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks protect --staged --no-banner --redact || {
+    echo "gitleaks found a potential secret in staged changes. Fix or rotate the value and re-stage."
+    echo "If this is a false positive, add a rule to .gitleaks.toml."
+    exit 1
+  }
+else
+  echo "gitleaks not installed; skipping secret scan."
+  echo "Install on macOS: brew install gitleaks   |   Linux: see https://github.com/gitleaks/gitleaks"
+fi

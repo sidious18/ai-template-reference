@@ -1,0 +1,1847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fleet data app — mockup</title>
+<style>
+  :root {
+    --bg-page: #f7f7f5;
+    --bg-surface: #ffffff;
+    --bg-muted: #f1efe8;
+    --bg-info: #e6f1fb;
+    --bg-success: #eaf3de;
+    --bg-warning: #faeeda;
+    --bg-danger: #fcebeb;
+    --text-primary: #1a1a1a;
+    --text-secondary: #5f5e5a;
+    --text-tertiary: #888780;
+    --text-info: #185fa5;
+    --text-success: #3b6d11;
+    --text-warning: #854f0b;
+    --text-danger: #a32d2d;
+    --border: rgba(0,0,0,0.10);
+    --border-strong: rgba(0,0,0,0.20);
+    --info: #378ADD;
+    --info-bg: rgba(55,138,221,0.10);
+    --teal: #1D9E75;
+    --coral: #D85A30;
+    --amber: #BA7517;
+    --purple: #7F77DD;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    color: var(--text-primary);
+    background: var(--bg-page);
+    min-height: 100vh;
+  }
+  .app-shell {
+    max-width: 1280px;
+    margin: 0 auto;
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+  }
+  h1.app-title { margin: 0 0 16px; font-size: 18px; font-weight: 500; }
+  .tabs {
+    display: flex; gap: 4px;
+    background: var(--bg-muted);
+    padding: 4px; border-radius: var(--radius-md);
+    width: fit-content; margin: 0 0 16px;
+  }
+  .tab {
+    padding: 6px 16px; font-size: 13px; border-radius: 6px;
+    cursor: pointer; border: none; background: transparent;
+    color: var(--text-secondary); font-family: inherit;
+  }
+  .tab.active {
+    background: var(--bg-surface); color: var(--text-primary);
+    box-shadow: 0 0 0 0.5px var(--border);
+  }
+  .toolbar {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 13px; color: var(--text-secondary);
+    margin: 0 0 12px; min-height: 28px;
+  }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; background: var(--bg-muted);
+    border-radius: 999px; font-size: 12px;
+  }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--info); }
+
+  /* Dashboard canvas */
+  .canvas-wrap { max-width: 880px; margin: 0 auto; }
+  .canvas {
+    position: relative;
+    background: var(--bg-muted);
+    padding: 8px;
+    border-radius: var(--radius-lg);
+    aspect-ratio: 1 / 1;
+    user-select: none;
+  }
+  .empty-grid {
+    position: absolute; inset: 8px;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    gap: 4px;
+  }
+  .empty-cell {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .empty-cell.selected {
+    outline: 1.5px solid var(--info);
+    outline-offset: -1px;
+    background: var(--bg-info);
+  }
+  .widgets-layer { position: absolute; inset: 8px; pointer-events: none; }
+  .widget {
+    position: absolute;
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    overflow: hidden;
+    pointer-events: auto;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+  }
+  .widget:hover { border-color: var(--border-strong); }
+  .widget .w-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 4px;
+  }
+  .widget .w-title { font-size: 11px; font-weight: 500; color: var(--text-secondary); }
+  .widget .w-tag { font-size: 10px; color: var(--text-tertiary); }
+  .widget .w-body { flex: 1; min-height: 0; position: relative; }
+  .widget .w-big { font-size: 28px; font-weight: 500; line-height: 1.1; color: var(--text-primary); }
+  .widget .w-sub { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+  .widget .w-delta { font-size: 11px; color: var(--text-success); margin-top: 4px; }
+  .widget .w-delta.down { color: var(--text-danger); }
+  .lasso {
+    position: absolute;
+    border: 1px dashed var(--info);
+    background: var(--info-bg);
+    pointer-events: none;
+    border-radius: 2px;
+    z-index: 50;
+  }
+  .menu-overlay {
+    margin-top: 16px;
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    max-width: 880px;
+    margin-left: auto; margin-right: auto;
+  }
+  .menu-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .menu-head h3 { margin: 0; font-size: 14px; font-weight: 500; }
+  .menu-head .count { font-size: 12px; color: var(--text-secondary); }
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 8px;
+  }
+  .menu-item {
+    padding: 10px 12px;
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-surface);
+    cursor: pointer; text-align: left; font-family: inherit;
+  }
+  .menu-item:hover:not([disabled]) { border-color: var(--border-strong); background: var(--bg-muted); }
+  .menu-item[disabled] { opacity: 0.45; cursor: not-allowed; }
+  .menu-item .label { font-size: 13px; font-weight: 500; display: block; margin-bottom: 2px; color: var(--text-primary); }
+  .menu-item .desc { font-size: 11px; color: var(--text-secondary); }
+  .menu-item .min-size { font-size: 10px; color: var(--text-tertiary); margin-top: 4px; display: block; }
+  .menu-actions { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; }
+  .ghost-btn {
+    font-size: 12px; padding: 6px 14px;
+    border: 0.5px solid var(--border);
+    background: transparent; border-radius: 6px;
+    cursor: pointer; font-family: inherit; color: var(--text-primary);
+  }
+  .ghost-btn:hover { background: var(--bg-muted); }
+  .ghost-btn.primary { background: var(--text-primary); color: var(--bg-surface); border-color: transparent; }
+  .ghost-btn.primary:hover { opacity: 0.85; background: var(--text-primary); }
+  .hint { font-size: 11px; color: var(--text-tertiary); margin-top: 12px; text-align: center; max-width: 880px; margin-left: auto; margin-right: auto; }
+
+  /* Widget body internals */
+  .leaderboard-list { font-size: 12px; }
+  .lb-row {
+    display: grid; grid-template-columns: 16px 1fr auto auto;
+    gap: 8px; padding: 5px 0;
+    border-bottom: 0.5px dashed var(--border);
+    align-items: center;
+  }
+  .lb-row:last-child { border-bottom: none; }
+  .lb-rank { color: var(--text-tertiary); font-size: 11px; }
+  .lb-name { color: var(--text-primary); }
+  .lb-miles { color: var(--text-secondary); font-size: 11px; }
+  .lb-score { font-weight: 500; }
+  .issue-list { font-size: 11px; }
+  .iss-row {
+    display: grid; grid-template-columns: auto 1fr auto;
+    gap: 8px; padding: 5px 0;
+    border-bottom: 0.5px dashed var(--border);
+    align-items: center;
+  }
+  .iss-row:last-child { border-bottom: none; }
+  .sev { width: 6px; height: 6px; border-radius: 50%; }
+  .sev.high { background: var(--coral); }
+  .sev.med { background: var(--amber); }
+  .sev.low { background: var(--teal); }
+  .iss-plate { font-family: ui-monospace, monospace; font-size: 10px; color: var(--text-secondary); }
+  .iss-text { color: var(--text-primary); }
+  .iss-days { color: var(--text-tertiary); font-size: 10px; }
+  .heat-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(7, 1fr);
+    gap: 2px; width: 100%; height: 100%;
+  }
+  .heat-cell { border-radius: 2px; background: var(--info); }
+
+  /* Research screen */
+  .analysis { display: grid; grid-template-columns: 220px 1fr; gap: 12px; min-height: 580px; }
+  .analysis-side { background: var(--bg-muted); border-radius: var(--radius-lg); padding: 12px; }
+  .side-group { margin-bottom: 14px; }
+  .side-group h4 { font-size: 11px; color: var(--text-tertiary); margin: 0 0 6px; font-weight: 500; padding-left: 8px; }
+  .side-item {
+    padding: 6px 10px; font-size: 12px; border-radius: 6px;
+    cursor: pointer; display: flex; align-items: center; gap: 8px;
+    color: var(--text-secondary);
+  }
+  .side-item:hover { background: var(--bg-surface); color: var(--text-primary); }
+  .side-item.active { background: var(--bg-surface); color: var(--text-primary); font-weight: 500; }
+  .side-item .si-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.5; }
+  .analysis-main { background: var(--bg-surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 16px 18px; }
+  .crumbs { font-size: 12px; color: var(--text-tertiary); margin-bottom: 14px; }
+  .crumbs b { color: var(--text-primary); font-weight: 500; }
+  .page-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 14px;
+  }
+  .page-head h2 { margin: 0; font-size: 16px; font-weight: 500; }
+  .page-head .page-actions { display: flex; gap: 6px; }
+  .metric-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+  .metric { background: var(--bg-muted); padding: 10px 12px; border-radius: var(--radius-md); }
+  .metric .m-l { font-size: 11px; color: var(--text-secondary); }
+  .metric .m-v { font-size: 18px; font-weight: 500; margin-top: 2px; }
+  .metric .m-d { font-size: 11px; color: var(--text-success); margin-top: 1px; }
+  .metric .m-d.down { color: var(--text-danger); }
+  .work-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .work-card { border: 0.5px solid var(--border); border-radius: var(--radius-md); padding: 12px 14px; }
+  .work-card h5 {
+    margin: 0 0 8px; font-size: 12px; font-weight: 500;
+    display: flex; justify-content: space-between; align-items: center;
+    color: var(--text-secondary);
+  }
+  .work-card h5 .tag { font-size: 10px; background: var(--bg-muted); padding: 2px 8px; border-radius: 999px; color: var(--text-tertiary); }
+  .tbl { width: 100%; font-size: 11px; border-collapse: collapse; }
+  .tbl th { text-align: left; font-weight: 500; color: var(--text-secondary); padding: 6px 4px; border-bottom: 0.5px solid var(--border); background: var(--bg-muted); }
+  .tbl td { padding: 5px 4px; border-bottom: 0.5px solid var(--border); }
+  .tbl tr:last-child td { border-bottom: none; }
+  .tool-strip { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .chip {
+    font-size: 11px; padding: 5px 10px;
+    border: 0.5px solid var(--border); border-radius: 999px;
+    cursor: pointer; background: var(--bg-surface);
+    color: var(--text-secondary); font-family: inherit;
+  }
+  .chip:hover { color: var(--text-primary); border-color: var(--border-strong); background: var(--bg-muted); }
+  .chip.active { background: var(--text-primary); color: var(--bg-surface); border-color: transparent; }
+
+  /* Form/control fragments */
+  .field-row { display: grid; grid-template-columns: 110px 1fr; gap: 12px; align-items: center; padding: 6px 0; font-size: 12px; }
+  .field-row label { color: var(--text-secondary); }
+  .field-row select, .field-row input[type="text"], .field-row input[type="number"], .field-row input[type="date"] {
+    width: 100%; padding: 6px 8px; font-size: 12px;
+    border: 0.5px solid var(--border); border-radius: 6px;
+    background: var(--bg-surface); font-family: inherit; color: var(--text-primary);
+  }
+  .field-row select:focus, .field-row input:focus { outline: 1.5px solid var(--info); outline-offset: -1px; }
+
+  .filter-row {
+    display: grid; grid-template-columns: auto 1fr auto auto;
+    gap: 6px; padding: 6px 0; align-items: center; font-size: 12px;
+  }
+  .filter-row select, .filter-row input {
+    padding: 5px 8px; font-size: 12px;
+    border: 0.5px solid var(--border); border-radius: 6px;
+    background: var(--bg-surface); font-family: inherit; color: var(--text-primary);
+  }
+  .filter-and { font-size: 10px; color: var(--text-tertiary); padding-left: 4px; }
+  .x-btn {
+    width: 18px; height: 18px; border-radius: 4px; border: none;
+    background: transparent; cursor: pointer; color: var(--text-tertiary);
+    font-size: 13px; line-height: 1;
+  }
+  .x-btn:hover { background: var(--bg-muted); color: var(--text-primary); }
+
+  /* SQL console */
+  .sql-editor {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 12px;
+    background: #1a1a1a;
+    color: #e8e8e8;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    line-height: 1.6;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .sql-editor .kw { color: #c084fc; }
+  .sql-editor .fn { color: #5dcaa5; }
+  .sql-editor .str { color: #f0997b; }
+  .sql-editor .num { color: #85b7eb; }
+  .sql-editor .com { color: #888; font-style: italic; }
+  .console-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 12px; background: var(--bg-muted);
+    border-top: 0.5px solid var(--border);
+    font-size: 11px; color: var(--text-secondary);
+  }
+
+  /* Charts in research */
+  .chart-shell {
+    height: 220px;
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    position: relative;
+  }
+  .chart-shell.tall { height: 300px; }
+  .chart-shell svg { width: 100%; height: 100%; }
+  .chart-axis { stroke: var(--border); stroke-width: 0.5; }
+  .chart-grid { stroke: var(--border); stroke-width: 0.5; stroke-dasharray: 2 2; opacity: 0.6; }
+  .chart-axis-label { font-size: 9px; fill: var(--text-tertiary); }
+
+  /* Pivot */
+  .pivot-table { border-collapse: collapse; width: 100%; font-size: 11px; }
+  .pivot-table th, .pivot-table td {
+    border: 0.5px solid var(--border);
+    padding: 5px 8px; text-align: right;
+  }
+  .pivot-table th:first-child, .pivot-table td:first-child { text-align: left; }
+  .pivot-table th { background: var(--bg-muted); font-weight: 500; color: var(--text-secondary); }
+  .pivot-table tr.total td { background: var(--bg-muted); font-weight: 500; }
+  .pivot-cell-shade { position: relative; }
+  .pivot-cell-shade .shade {
+    position: absolute; inset: 0;
+    background: var(--info); opacity: 0.12;
+    pointer-events: none;
+    border-radius: 0;
+  }
+  .pivot-cell-shade .v { position: relative; z-index: 1; }
+
+  /* Cohort grid */
+  .cohort-grid { display: grid; gap: 1px; font-size: 10px; }
+  .cohort-cell {
+    padding: 6px 4px; text-align: center;
+    background: var(--info); color: white;
+    border-radius: 2px; font-weight: 500;
+  }
+  .cohort-label { padding: 6px 4px; font-size: 10px; color: var(--text-secondary); background: var(--bg-muted); border-radius: 2px; text-align: left; padding-left: 8px; }
+  .cohort-headcell { padding: 6px 4px; font-size: 10px; color: var(--text-tertiary); text-align: center; }
+
+  /* Anomaly */
+  .anom-row {
+    display: grid; grid-template-columns: 12px 60px 1fr auto auto;
+    gap: 10px; padding: 8px 0;
+    border-bottom: 0.5px solid var(--border);
+    align-items: center; font-size: 12px;
+  }
+  .anom-row:last-child { border-bottom: none; }
+  .anom-sev { width: 8px; height: 8px; border-radius: 50%; }
+  .anom-when { color: var(--text-tertiary); font-size: 11px; }
+  .anom-desc strong { font-weight: 500; }
+  .anom-z { font-family: ui-monospace, monospace; font-size: 11px; color: var(--text-secondary); }
+
+  /* Driver scoring */
+  .score-card {
+    display: flex; gap: 14px; align-items: center;
+    padding: 12px;
+    border: 0.5px solid var(--border); border-radius: var(--radius-md);
+  }
+  .score-circle {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 500;
+    flex-shrink: 0;
+  }
+  .score-circle.good { background: var(--bg-success); color: var(--text-success); }
+  .score-circle.mid { background: var(--bg-warning); color: var(--text-warning); }
+  .score-circle.bad { background: var(--bg-danger); color: var(--text-danger); }
+  .score-name { font-weight: 500; font-size: 13px; }
+  .score-meta { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+  .score-bars { display: grid; grid-template-columns: 1fr; gap: 4px; margin-top: 6px; max-width: 220px; }
+  .score-bar-row { display: grid; grid-template-columns: 80px 1fr 30px; gap: 6px; align-items: center; font-size: 10px; color: var(--text-secondary); }
+  .score-bar { height: 4px; background: var(--bg-muted); border-radius: 2px; overflow: hidden; }
+  .score-bar-fill { height: 100%; background: var(--info); border-radius: 2px; }
+
+  /* Correlation matrix */
+  .corr-table { border-collapse: collapse; font-size: 10px; width: 100%; }
+  .corr-table th, .corr-table td {
+    border: 0.5px solid var(--border);
+    padding: 6px 4px; text-align: center;
+    font-weight: 400;
+  }
+  .corr-table th { color: var(--text-secondary); background: var(--bg-muted); }
+  .corr-table th:first-child, .corr-table td:first-child { text-align: left; padding-left: 8px; }
+  .corr-cell { position: relative; }
+  .corr-cell .corr-bg { position: absolute; inset: 0; pointer-events: none; }
+  .corr-cell .corr-v { position: relative; z-index: 1; font-family: ui-monospace, monospace; }
+
+  /* Report builder */
+  .report-builder { display: grid; grid-template-columns: 200px 1fr; gap: 10px; min-height: 380px; }
+  .block-palette { background: var(--bg-muted); border-radius: var(--radius-md); padding: 10px; }
+  .block-palette h6 { margin: 0 0 6px; font-size: 11px; color: var(--text-tertiary); font-weight: 500; }
+  .palette-item {
+    padding: 6px 8px; font-size: 11px; border-radius: 4px;
+    background: var(--bg-surface); border: 0.5px solid var(--border);
+    margin-bottom: 4px; cursor: grab; display: flex; align-items: center; gap: 6px;
+  }
+  .palette-item:hover { border-color: var(--border-strong); }
+  .palette-item .pi-icon { width: 12px; height: 12px; border-radius: 2px; background: var(--text-tertiary); flex-shrink: 0; }
+  .report-canvas {
+    background: var(--bg-surface); border: 0.5px solid var(--border);
+    border-radius: var(--radius-md); padding: 16px; overflow-y: auto;
+  }
+  .report-block {
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 12px; margin-bottom: 8px;
+    position: relative;
+  }
+  .report-block .rb-label {
+    position: absolute; top: -7px; left: 10px;
+    background: var(--bg-surface); padding: 0 6px;
+    font-size: 10px; color: var(--text-tertiary);
+  }
+  .report-block.title { padding: 16px 12px 4px; }
+  .report-block.title h3 { margin: 0; font-size: 18px; font-weight: 500; }
+  .report-block.title p { margin: 4px 0 0; font-size: 11px; color: var(--text-secondary); }
+
+  /* Schedules */
+  .schedule-row {
+    display: grid; grid-template-columns: 1fr auto auto auto auto;
+    gap: 10px; padding: 10px 12px;
+    border: 0.5px solid var(--border); border-radius: var(--radius-md);
+    margin-bottom: 6px; align-items: center; font-size: 12px;
+  }
+  .schedule-row .sr-name { font-weight: 500; }
+  .schedule-row .sr-meta { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+  .badge {
+    display: inline-block; padding: 2px 8px;
+    font-size: 10px; border-radius: 999px;
+    background: var(--bg-muted); color: var(--text-secondary);
+  }
+  .badge.on { background: var(--bg-success); color: var(--text-success); }
+  .badge.off { background: var(--bg-muted); color: var(--text-tertiary); }
+  .badge.warn { background: var(--bg-warning); color: var(--text-warning); }
+
+  /* Saved views */
+  .view-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+  }
+  .view-card {
+    border: 0.5px solid var(--border); border-radius: var(--radius-md);
+    padding: 12px; cursor: pointer;
+  }
+  .view-card:hover { border-color: var(--border-strong); }
+  .view-card .vc-title { font-weight: 500; font-size: 13px; margin-bottom: 4px; }
+  .view-card .vc-desc { font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; line-height: 1.4; }
+  .view-card .vc-meta {
+    display: flex; justify-content: space-between;
+    font-size: 10px; color: var(--text-tertiary);
+    padding-top: 8px;
+    border-top: 0.5px solid var(--border);
+  }
+
+  /* App header w/ auth toggle + user pill */
+  .app-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px;
+  }
+  .app-header h1.app-title { margin: 0; }
+  .auth-toggle { display: flex; gap: 4px; align-items: center; }
+
+  .tabs-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px; gap: 12px;
+  }
+  .tabs-row .tabs { margin: 0; }
+  .user-pill {
+    display: flex; gap: 10px; align-items: center;
+    padding: 4px 10px 4px 4px;
+    border: 0.5px solid var(--border);
+    border-radius: 999px;
+    cursor: pointer;
+    background: var(--bg-surface);
+  }
+  .user-pill:hover { border-color: var(--border-strong); }
+  .user-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--bg-info); color: var(--text-info);
+    font-size: 11px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .user-meta { display: flex; flex-direction: column; line-height: 1.2; }
+  .user-name { font-size: 12px; font-weight: 500; }
+  .user-org { font-size: 10px; color: var(--text-tertiary); }
+  .user-chevron { font-size: 10px; color: var(--text-tertiary); }
+
+  /* Auth screen */
+  .auth-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0;
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    min-height: 560px;
+    max-width: 980px;
+    margin: 24px auto;
+  }
+  .auth-shell.auth-shell--single {
+    grid-template-columns: 1fr;
+    max-width: 480px;
+    min-height: 0;
+  }
+  .auth-side {
+    background: var(--bg-muted);
+    padding: 32px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    border-right: 0.5px solid var(--border);
+  }
+  .auth-brand { display: flex; align-items: center; gap: 10px; }
+  .auth-logo {
+    width: 24px; height: 24px;
+    background: var(--text-primary);
+    border-radius: 6px;
+    position: relative;
+  }
+  .auth-logo::after {
+    content: ''; position: absolute;
+    inset: 6px; background: var(--bg-surface); border-radius: 2px;
+  }
+  .auth-brand-name { font-size: 13px; font-weight: 500; }
+  .auth-tagline {
+    font-size: 22px; font-weight: 500; line-height: 1.3;
+    margin: 36px 0 18px; color: var(--text-primary);
+    max-width: 320px;
+  }
+  .auth-bullets { list-style: none; padding: 0; margin: 0 0 36px; }
+  .auth-bullets li {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12px; color: var(--text-secondary);
+    padding: 6px 0;
+  }
+  .ab-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--info); flex-shrink: 0; }
+  .auth-foot {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    font-size: 11px; color: var(--text-tertiary);
+  }
+  .auth-panel { padding: 32px 40px; display: flex; flex-direction: column; }
+  .auth-mode-tabs {
+    display: flex; gap: 4px;
+    background: var(--bg-muted); padding: 4px;
+    border-radius: var(--radius-md);
+    width: fit-content; margin-bottom: 24px;
+  }
+  .auth-mode-tab {
+    padding: 6px 14px; font-size: 12px; border-radius: 6px;
+    cursor: pointer; border: none; background: transparent;
+    color: var(--text-secondary); font-family: inherit;
+  }
+  .auth-mode-tab.active {
+    background: var(--bg-surface); color: var(--text-primary);
+    box-shadow: 0 0 0 0.5px var(--border);
+  }
+  .auth-form h2 {
+    margin: 0 0 6px; font-size: 18px; font-weight: 500;
+  }
+  .auth-form .auth-sub {
+    margin: 0 0 22px; font-size: 12px; color: var(--text-secondary);
+  }
+  .auth-field {
+    display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px;
+  }
+  .auth-field label {
+    font-size: 11px; color: var(--text-secondary);
+  }
+  .auth-field input {
+    padding: 8px 10px; font-size: 13px;
+    border: 0.5px solid var(--border); border-radius: 6px;
+    background: var(--bg-surface); color: var(--text-primary);
+    font-family: inherit;
+  }
+  .auth-field input:focus { outline: 1.5px solid var(--info); outline-offset: -1px; }
+  .auth-field .auth-help { font-size: 10px; color: var(--text-tertiary); margin-top: 2px; }
+  .auth-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin: 4px 0 16px; font-size: 11px; color: var(--text-secondary);
+  }
+  .auth-row a { color: var(--text-info); text-decoration: none; }
+  .auth-row a:hover { text-decoration: underline; }
+  .auth-checkbox { display: flex; align-items: center; gap: 6px; }
+  .auth-checkbox input { width: 14px; height: 14px; }
+  .auth-submit {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 13px; font-weight: 500;
+    background: var(--text-primary); color: var(--bg-surface);
+    border: none; border-radius: 6px;
+    cursor: pointer; font-family: inherit;
+    margin-bottom: 16px;
+  }
+  .auth-submit:hover { opacity: 0.9; }
+  .auth-divider {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 10px; color: var(--text-tertiary);
+    margin: 12px 0;
+  }
+  .auth-divider::before, .auth-divider::after {
+    content: ''; flex: 1; height: 0; border-top: 0.5px solid var(--border);
+  }
+  .auth-sso-list {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  }
+  .auth-sso-btn {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; font-size: 12px;
+    background: var(--bg-surface); border: 0.5px solid var(--border);
+    border-radius: 6px; cursor: pointer;
+    font-family: inherit; color: var(--text-primary);
+  }
+  .auth-sso-btn:hover { background: var(--bg-muted); border-color: var(--border-strong); }
+  .auth-sso-btn .auth-sso-icon {
+    width: 18px; height: 18px; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 500; color: white;
+    flex-shrink: 0;
+  }
+  .auth-bottom-note {
+    margin-top: auto; padding-top: 16px;
+    font-size: 11px; color: var(--text-tertiary); text-align: center;
+  }
+  .auth-bottom-note a { color: var(--text-info); text-decoration: none; }
+  .auth-strength {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px;
+    margin-top: 4px;
+  }
+  .auth-strength span {
+    height: 3px; border-radius: 2px;
+    background: var(--bg-muted);
+  }
+  .auth-strength span.on-1 { background: var(--coral); }
+  .auth-strength span.on-2 { background: var(--amber); }
+  .auth-strength span.on-3 { background: var(--info); }
+  .auth-strength span.on-4 { background: var(--teal); }
+  .sso-list-block {
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .sso-org-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px;
+    border: 0.5px solid var(--border);
+    border-radius: 6px; cursor: pointer;
+    background: var(--bg-surface);
+  }
+  .sso-org-row:hover { border-color: var(--border-strong); background: var(--bg-muted); }
+  .sso-org-icon {
+    width: 32px; height: 32px; border-radius: 6px;
+    background: var(--bg-info); color: var(--text-info);
+    font-size: 12px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .sso-org-info { flex: 1; }
+  .sso-org-name { font-size: 13px; font-weight: 500; }
+  .sso-org-desc { font-size: 11px; color: var(--text-secondary); }
+  .sso-org-arrow { color: var(--text-tertiary); font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <div class="app-header">
+    <h1 class="app-title">Fleet operations</h1>
+    <div class="auth-toggle">
+      <span style="font-size:11px;color:var(--text-tertiary);margin-right:4px">View as:</span>
+      <button class="ghost-btn" id="view-loggedout" type="button">Signed out</button>
+      <button class="ghost-btn active" id="view-loggedin" type="button">Signed in</button>
+    </div>
+  </div>
+
+  <div class="signed-in-only">
+    <div class="tabs-row">
+      <div class="tabs">
+        <button class="tab active" data-screen="dash" type="button">Dashboard</button>
+        <button class="tab" data-screen="research" type="button">Research</button>
+      </div>
+      <div class="user-pill" id="user-pill">
+        <span class="user-avatar">MR</span>
+        <span class="user-meta"><span class="user-name">M. Rodriguez</span><span class="user-org">Acme Logistics · Admin</span></span>
+        <span class="user-chevron">▾</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================== AUTH ============================== -->
+  <div id="screen-auth" style="display:none">
+    <div class="auth-shell auth-shell--single">
+      <section class="auth-panel">
+        <div class="auth-mode-tabs">
+          <button class="auth-mode-tab active" data-mode="signin" type="button">Sign in</button>
+          <button class="auth-mode-tab" data-mode="signup" type="button">Create account</button>
+          <button class="auth-mode-tab" data-mode="sso" type="button">SSO</button>
+        </div>
+        <div id="auth-form-host"></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ============================== DASHBOARD ============================== -->
+  <div id="screen-dash">
+    <div class="toolbar">
+      <span id="status-text">Click and drag across empty cells to select a region for a new widget.</span>
+      <span style="display:flex;gap:6px;align-items:center">
+        <span style="font-size:11px;color:var(--text-tertiary);margin-right:4px">Demo states:</span>
+        <button class="ghost-btn" id="state-empty" type="button">Empty</button>
+        <button class="ghost-btn" id="state-selecting" type="button">Selecting</button>
+        <button class="ghost-btn" id="state-configured" type="button">Configured</button>
+        <span class="pill" style="margin-left:8px"><span class="dot"></span><span id="sel-count">0 cells selected</span></span>
+      </span>
+    </div>
+    <div class="canvas-wrap">
+      <div class="canvas" id="canvas">
+        <div class="empty-grid" id="empty-grid"></div>
+        <div class="widgets-layer" id="widgets-layer"></div>
+      </div>
+    </div>
+    <div id="menu-host"></div>
+    <p class="hint">8 × 8 grid · drag across empty cells to define a region · the chosen widget fills that whole region · click an existing widget to remove it</p>
+  </div>
+
+  <!-- ============================== RESEARCH ============================== -->
+  <div id="screen-research" style="display:none">
+    <div class="analysis">
+      <aside class="analysis-side">
+        <div class="side-group">
+          <h4>Explore</h4>
+          <div class="side-item active" data-page="query"><span class="si-dot"></span>Query builder</div>
+          <div class="side-item" data-page="pivot"><span class="si-dot"></span>Pivot table</div>
+          <div class="side-item" data-page="cohorts"><span class="si-dot"></span>Cohorts</div>
+          <div class="side-item" data-page="sql"><span class="si-dot"></span>SQL console</div>
+        </div>
+        <div class="side-group">
+          <h4>Analyse</h4>
+          <div class="side-item" data-page="trend"><span class="si-dot"></span>Trend &amp; forecast</div>
+          <div class="side-item" data-page="anomaly"><span class="si-dot"></span>Anomaly detection</div>
+          <div class="side-item" data-page="scoring"><span class="si-dot"></span>Driver scoring</div>
+          <div class="side-item" data-page="correlation"><span class="si-dot"></span>Correlation matrix</div>
+        </div>
+        <div class="side-group">
+          <h4>Deliver</h4>
+          <div class="side-item" data-page="report"><span class="si-dot"></span>Report builder</div>
+          <div class="side-item" data-page="schedule"><span class="si-dot"></span>Scheduled exports</div>
+          <div class="side-item" data-page="views"><span class="si-dot"></span>Saved views</div>
+        </div>
+      </aside>
+      <section class="analysis-main" id="research-main"></section>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   DASHBOARD — region-filling widgets
+   ===================================================================== */
+(function(){
+  var CATALOG = {
+    'kpi-miles':   { label: 'Miles KPI',       desc: 'Total miles + trend',          minW: 2, minH: 2 },
+    'kpi-fuel':    { label: 'Fuel KPI',        desc: 'Avg L/100km + delta',          minW: 2, minH: 2 },
+    'kpi-issues':  { label: 'Issues KPI',      desc: 'Open issue count',             minW: 2, minH: 2 },
+    'kpi-drivers': { label: 'Drivers KPI',     desc: 'Active drivers today',         minW: 2, minH: 2 },
+    'spark':       { label: 'Trend line',      desc: 'Time-series for any metric',   minW: 3, minH: 2 },
+    'bars':        { label: 'Bar comparison',  desc: 'Compare cars / drivers / wks', minW: 3, minH: 3 },
+    'leaderboard': { label: 'Driver leaderboard', desc: 'Ranked drivers with scores',minW: 3, minH: 3 },
+    'issues':      { label: 'Issues feed',     desc: 'Vehicle problems by severity', minW: 3, minH: 3 },
+    'heat':        { label: 'Utilization heatmap', desc: 'Hour × day-of-week usage', minW: 3, minH: 3 }
+  };
+
+  var DEFAULT_LAYOUT = [
+    { id: 'w1', type: 'kpi-miles',   x: 0, y: 0, w: 2, h: 2 },
+    { id: 'w2', type: 'kpi-fuel',    x: 2, y: 0, w: 2, h: 2 },
+    { id: 'w3', type: 'kpi-issues',  x: 4, y: 0, w: 2, h: 2 },
+    { id: 'w4', type: 'kpi-drivers', x: 6, y: 0, w: 2, h: 2 },
+    { id: 'w5', type: 'spark',       x: 0, y: 2, w: 4, h: 3 },
+    { id: 'w6', type: 'leaderboard', x: 4, y: 2, w: 4, h: 3 },
+    { id: 'w7', type: 'bars',        x: 0, y: 5, w: 3, h: 3 },
+    { id: 'w8', type: 'issues',      x: 3, y: 5, w: 3, h: 3 },
+    { id: 'w9', type: 'heat',        x: 6, y: 5, w: 2, h: 3 }
+  ];
+  function cloneLayout(arr) { return arr.map(function(w){ return Object.assign({}, w); }); }
+  var widgets = cloneLayout(DEFAULT_LAYOUT);
+
+  var GRID = 8;
+  var emptyGrid = document.getElementById('empty-grid');
+  var widgetsLayer = document.getElementById('widgets-layer');
+  var canvas = document.getElementById('canvas');
+
+  var cellEls = [];
+  for (var i = 0; i < GRID * GRID; i++) {
+    var c = document.createElement('div');
+    c.className = 'empty-cell';
+    c.dataset.idx = i;
+    emptyGrid.appendChild(c);
+    cellEls.push(c);
+  }
+
+  function cellCovered(idx) {
+    var col = idx % GRID, row = Math.floor(idx / GRID);
+    return widgets.some(function(w){
+      return col >= w.x && col < w.x + w.w && row >= w.y && row < w.y + w.h;
+    });
+  }
+  function refreshCellVisibility() {
+    cellEls.forEach(function(c, i){ c.style.visibility = cellCovered(i) ? 'hidden' : 'visible'; });
+  }
+
+  function widgetHTML(w) {
+    var head = function(title, tag) {
+      return '<div class="w-head"><span class="w-title">' + title + '</span>' +
+             (tag ? '<span class="w-tag">' + tag + '</span>' : '') + '</div>';
+    };
+    if (w.type === 'kpi-miles')   return head('Total miles', '30d') + '<div class="w-body"><div class="w-big">412,809</div><div class="w-sub">miles driven</div><div class="w-delta">+4.2% vs prev</div></div>';
+    if (w.type === 'kpi-fuel')    return head('Avg fuel use', 'L/100km') + '<div class="w-body"><div class="w-big">7.8</div><div class="w-sub">fleet average</div><div class="w-delta down">+0.3 vs prev</div></div>';
+    if (w.type === 'kpi-issues')  return head('Open issues', 'now') + '<div class="w-body"><div class="w-big">23</div><div class="w-sub">across 18 cars</div><div class="w-delta">−6 vs prev</div></div>';
+    if (w.type === 'kpi-drivers') return head('Active drivers', 'today') + '<div class="w-body"><div class="w-big">48 / 52</div><div class="w-sub">on shift</div><div class="w-delta">+2 vs prev</div></div>';
+    if (w.type === 'spark')       return head('Daily miles driven', 'last 30 days') + '<div class="w-body">' + sparkSVG() + '</div>';
+    if (w.type === 'bars')        return head('Fuel by vehicle', 'L/100km') + '<div class="w-body">' + barsSVG() + '</div>';
+    if (w.type === 'leaderboard') return head('Driver leaderboard', 'by score') +
+      '<div class="w-body"><div class="leaderboard-list">' +
+        lbRow(1,'M. Rodriguez','4,812 mi',96) + lbRow(2,'L. Chen','3,977 mi',94) +
+        lbRow(3,'J. Park','4,506 mi',92) + lbRow(4,'A. Singh','4,201 mi',88) +
+        lbRow(5,'D. Okafor','3,840 mi',85) + '</div></div>';
+    if (w.type === 'issues')      return head('Issues feed', '23 open') +
+      '<div class="w-body"><div class="issue-list">' +
+        issRow('high','BX-4102','Service overdue','11d') +
+        issRow('high','BX-3401','High fuel variance','4d') +
+        issRow('med','BX-2218','Engine warning','2d') +
+        issRow('med','BX-1907','Low tyre pressure','1d') +
+        issRow('low','BX-2890','Wiper fluid low','1d') + '</div></div>';
+    if (w.type === 'heat')        return head('Utilization', 'hr × day') + '<div class="w-body">' + heatSVG() + '</div>';
+    return head('Widget', '') + '<div class="w-body"></div>';
+  }
+
+  function lbRow(rank, name, miles, score) {
+    return '<div class="lb-row"><span class="lb-rank">' + rank + '</span><span class="lb-name">' + name + '</span><span class="lb-miles">' + miles + '</span><span class="lb-score">' + score + '</span></div>';
+  }
+  function issRow(sev, plate, text, days) {
+    return '<div class="iss-row"><span class="sev ' + sev + '"></span><span><span class="iss-plate">' + plate + '</span> · <span class="iss-text">' + text + '</span></span><span class="iss-days">' + days + '</span></div>';
+  }
+  function sparkSVG() {
+    var pts = [22, 18, 20, 12, 16, 14, 10, 12, 8, 10, 6, 8, 4];
+    var d = pts.map(function(v, i){ return (i / (pts.length - 1) * 100).toFixed(1) + ',' + v; }).join(' ');
+    return '<svg viewBox="0 0 100 30" preserveAspectRatio="none" style="width:100%;height:100%">' +
+      '<polyline points="0,30 ' + d + ' 100,30" fill="rgba(55,138,221,0.10)" stroke="none"/>' +
+      '<polyline points="' + d + '" fill="none" stroke="#378ADD" stroke-width="0.8"/></svg>';
+  }
+  function barsSVG() {
+    var heights = [55, 70, 48, 82, 65, 90, 60, 75, 52];
+    var w = 100 / heights.length;
+    var bars = heights.map(function(h, i){
+      return '<rect x="' + (i * w + 1) + '" y="' + (100 - h) + '" width="' + (w - 2) + '" height="' + h + '" fill="#378ADD" opacity="0.75" rx="0.5"/>';
+    }).join('');
+    return '<svg viewBox="0 0 100 100" preserveAspectRatio="none" style="width:100%;height:100%">' + bars + '</svg>';
+  }
+  function heatSVG() {
+    var html = '<div class="heat-grid">';
+    for (var d = 0; d < 7; d++)
+      for (var h = 0; h < 8; h++) {
+        var v = Math.abs(Math.sin(d * 1.3 + h * 0.7)) * 0.85 + 0.05;
+        html += '<div class="heat-cell" style="opacity:' + v.toFixed(2) + '"></div>';
+      }
+    html += '</div>';
+    return html;
+  }
+
+  function renderWidgets() {
+    widgetsLayer.innerHTML = '';
+    var rect = canvas.getBoundingClientRect();
+    var inner = rect.width - 16;
+    if (inner <= 0) { setTimeout(renderWidgets, 50); return; }
+    var cellSize = (inner - 4 * (GRID - 1)) / GRID;
+    widgets.forEach(function(w){
+      var el = document.createElement('div');
+      el.className = 'widget';
+      el.style.left = (w.x * (cellSize + 4)) + 'px';
+      el.style.top  = (w.y * (cellSize + 4)) + 'px';
+      el.style.width  = (w.w * cellSize + (w.w - 1) * 4) + 'px';
+      el.style.height = (w.h * cellSize + (w.h - 1) * 4) + 'px';
+      el.innerHTML = widgetHTML(w);
+      el.addEventListener('click', function(e){
+        e.stopPropagation();
+        if (confirm('Remove this widget?')) {
+          widgets = widgets.filter(function(x){ return x.id !== w.id; });
+          renderWidgets();
+        }
+      });
+      widgetsLayer.appendChild(el);
+    });
+    refreshCellVisibility();
+  }
+  window.addEventListener('resize', renderWidgets);
+
+  var selected = new Set();
+  function selectionBounds() {
+    if (selected.size === 0) return null;
+    var minC = 7, maxC = 0, minR = 7, maxR = 0;
+    selected.forEach(function(i){
+      var c = i % GRID, r = Math.floor(i / GRID);
+      if (c < minC) minC = c; if (c > maxC) maxC = c;
+      if (r < minR) minR = r; if (r > maxR) maxR = r;
+    });
+    return { x: minC, y: minR, w: maxC - minC + 1, h: maxR - minR + 1 };
+  }
+  function selectionIsRectangular() {
+    var b = selectionBounds();
+    if (!b || b.w * b.h !== selected.size) return false;
+    for (var r = b.y; r < b.y + b.h; r++)
+      for (var c = b.x; c < b.x + b.w; c++) {
+        if (cellCovered(r * GRID + c)) return false;
+      }
+    return true;
+  }
+  function updateStatus() {
+    document.getElementById('sel-count').textContent =
+      selected.size + ' cell' + (selected.size === 1 ? '' : 's') + ' selected';
+    var st = document.getElementById('status-text');
+    if (selected.size === 0) {
+      st.textContent = 'Click and drag across empty cells to select a region for a new widget.';
+    } else {
+      var b = selectionBounds();
+      st.textContent = 'Region: ' + b.w + ' × ' + b.h + ' cells. Choose a widget below.';
+    }
+  }
+  function refreshSelection() {
+    cellEls.forEach(function(c, i){ c.classList.toggle('selected', selected.has(i)); });
+    updateStatus();
+    renderMenu();
+  }
+
+  var dragging = false, startPt = null, lasso = null;
+  function rectFor(a, b){
+    return { l: Math.min(a.x, b.x), t: Math.min(a.y, b.y), r: Math.max(a.x, b.x), bo: Math.max(a.y, b.y) };
+  }
+  emptyGrid.addEventListener('mousedown', function(e){
+    var t = e.target.closest('.empty-cell');
+    if (!t) return;
+    var idx = parseInt(t.dataset.idx, 10);
+    if (cellCovered(idx)) return;
+    e.preventDefault();
+    dragging = true;
+    var r = canvas.getBoundingClientRect();
+    startPt = { x: e.clientX - r.left, y: e.clientY - r.top };
+    if (!e.shiftKey) selected.clear();
+    selected.add(idx);
+    refreshSelection();
+    lasso = document.createElement('div');
+    lasso.className = 'lasso';
+    canvas.appendChild(lasso);
+  });
+  document.addEventListener('mousemove', function(e){
+    if (!dragging) return;
+    var r = canvas.getBoundingClientRect();
+    var pt = { x: e.clientX - r.left, y: e.clientY - r.top };
+    var rc = rectFor(startPt, pt);
+    lasso.style.left = rc.l + 'px';
+    lasso.style.top = rc.t + 'px';
+    lasso.style.width = (rc.r - rc.l) + 'px';
+    lasso.style.height = (rc.bo - rc.t) + 'px';
+    cellEls.forEach(function(c, i){
+      if (cellCovered(i)) return;
+      var cr = c.getBoundingClientRect();
+      var cx = cr.left - r.left, cy = cr.top - r.top;
+      var hit = !(cx + cr.width < rc.l || cx > rc.r || cy + cr.height < rc.t || cy > rc.bo);
+      if (hit) selected.add(i);
+    });
+    refreshSelection();
+  });
+  document.addEventListener('mouseup', function(){
+    if (!dragging) return;
+    dragging = false;
+    if (lasso) { lasso.remove(); lasso = null; }
+  });
+
+  function renderMenu() {
+    var host = document.getElementById('menu-host');
+    if (selected.size === 0) { host.innerHTML = ''; return; }
+    var b = selectionBounds();
+    var rectOK = selectionIsRectangular();
+    var html = '<div class="menu-overlay">' +
+      '<div class="menu-head"><h3>Choose a widget for this region</h3>' +
+      '<span class="count">' + b.w + ' × ' + b.h + ' cells' +
+      (rectOK ? '' : ' — selection must be rectangular and on empty cells') +
+      '</span></div><div class="menu-grid">';
+    Object.keys(CATALOG).forEach(function(k){
+      var c = CATALOG[k];
+      var fits = rectOK && b.w >= c.minW && b.h >= c.minH;
+      html += '<button class="menu-item" data-k="' + k + '" type="button"' + (fits ? '' : ' disabled') + '>' +
+        '<span class="label">' + c.label + '</span>' +
+        '<span class="desc">' + c.desc + '</span>' +
+        '<span class="min-size">needs ' + c.minW + ' × ' + c.minH + (fits ? '' : ' — too small') + '</span>' +
+        '</button>';
+    });
+    html += '</div><div class="menu-actions">' +
+      '<button class="ghost-btn" id="menu-cancel" type="button">Cancel</button></div></div>';
+    host.innerHTML = html;
+    host.querySelectorAll('.menu-item').forEach(function(btn){
+      if (btn.disabled) return;
+      btn.addEventListener('click', function(){
+        var b = selectionBounds();
+        widgets.push({ id: 'w' + Date.now(), type: btn.dataset.k, x: b.x, y: b.y, w: b.w, h: b.h });
+        selected.clear();
+        renderWidgets();
+        refreshSelection();
+      });
+    });
+    document.getElementById('menu-cancel').addEventListener('click', function(){
+      selected.clear();
+      refreshSelection();
+    });
+  }
+
+  document.querySelectorAll('.tab').forEach(function(t){
+    t.addEventListener('click', function(){
+      document.querySelectorAll('.tab').forEach(function(x){ x.classList.remove('active'); });
+      t.classList.add('active');
+      var s = t.dataset.screen;
+      document.getElementById('screen-dash').style.display = s === 'dash' ? 'block' : 'none';
+      document.getElementById('screen-research').style.display = s === 'research' ? 'block' : 'none';
+      if (s === 'dash') setTimeout(renderWidgets, 0);
+    });
+  });
+
+  // ─── Demo state controls ─────────────────────────────────────────
+  function setActiveStateBtn(id) {
+    ['state-empty', 'state-selecting', 'state-configured'].forEach(function(b){
+      var el = document.getElementById(b);
+      if (el) el.classList.toggle('active', b === id);
+    });
+  }
+  document.getElementById('state-empty').addEventListener('click', function(){
+    widgets = [];
+    selected.clear();
+    renderWidgets();
+    refreshSelection();
+    setActiveStateBtn('state-empty');
+  });
+  document.getElementById('state-selecting').addEventListener('click', function(){
+    widgets = [];
+    selected.clear();
+    // pre-populate a 4 × 3 selection in the upper-left so the menu opens
+    for (var r = 1; r < 4; r++) {
+      for (var c = 1; c < 5; c++) {
+        selected.add(r * GRID + c);
+      }
+    }
+    renderWidgets();
+    refreshSelection();
+    setActiveStateBtn('state-selecting');
+  });
+  document.getElementById('state-configured').addEventListener('click', function(){
+    widgets = cloneLayout(DEFAULT_LAYOUT);
+    selected.clear();
+    renderWidgets();
+    refreshSelection();
+    setActiveStateBtn('state-configured');
+  });
+  // Highlight the active state button via inline style on the .active class
+  var stateBtnStyle = document.createElement('style');
+  stateBtnStyle.textContent = '.ghost-btn.active { background: var(--text-primary); color: var(--bg-surface); border-color: transparent; }';
+  document.head.appendChild(stateBtnStyle);
+  setActiveStateBtn('state-configured');
+
+  setTimeout(renderWidgets, 50);
+})();
+
+/* =====================================================================
+   RESEARCH — eleven distinct pages
+   ===================================================================== */
+(function(){
+  var researchMain = document.getElementById('research-main');
+
+  // ------ Helpers shared across pages ------
+  function metricRow(items) {
+    return '<div class="metric-row">' + items.map(function(m){
+      return '<div class="metric"><div class="m-l">' + m.label + '</div>' +
+             '<div class="m-v">' + m.value + '</div>' +
+             (m.delta ? '<div class="m-d' + (m.down ? ' down' : '') + '">' + m.delta + '</div>' : '') +
+             '</div>';
+    }).join('') + '</div>';
+  }
+  function pageHead(crumbs, title, actions) {
+    var html = '<div class="crumbs">' + crumbs + '</div>';
+    html += '<div class="page-head"><h2>' + title + '</h2>';
+    if (actions) {
+      html += '<div class="page-actions">' + actions.map(function(a){
+        return '<button class="ghost-btn' + (a.primary ? ' primary' : '') + '" type="button">' + a.label + '</button>';
+      }).join('') + '</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+  function lineChart(opts) {
+    var pts = opts.points; // array of {x, y} normalized [0..1] for y; x = index
+    var W = 600, H = 200, pad = 30;
+    var xs = pts.length;
+    var html = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">';
+    // grid lines
+    for (var g = 0; g <= 4; g++) {
+      var y = pad + g * (H - pad * 2) / 4;
+      html += '<line class="chart-grid" x1="' + pad + '" y1="' + y + '" x2="' + (W - 10) + '" y2="' + y + '"/>';
+    }
+    // axes
+    html += '<line class="chart-axis" x1="' + pad + '" y1="' + pad + '" x2="' + pad + '" y2="' + (H - pad) + '"/>';
+    html += '<line class="chart-axis" x1="' + pad + '" y1="' + (H - pad) + '" x2="' + (W - 10) + '" y2="' + (H - pad) + '"/>';
+    // y labels
+    var yMax = opts.yMax || 100;
+    for (var g = 0; g <= 4; g++) {
+      var y = pad + g * (H - pad * 2) / 4;
+      var v = Math.round(yMax - g * yMax / 4);
+      html += '<text class="chart-axis-label" x="' + (pad - 4) + '" y="' + (y + 3) + '" text-anchor="end">' + v + '</text>';
+    }
+    // x labels
+    if (opts.xLabels) {
+      opts.xLabels.forEach(function(lbl, i){
+        var x = pad + i * (W - pad - 10) / (xs - 1);
+        html += '<text class="chart-axis-label" x="' + x + '" y="' + (H - pad + 12) + '" text-anchor="middle">' + lbl + '</text>';
+      });
+    }
+    // forecast band
+    if (opts.forecastFrom !== undefined) {
+      var fx = pad + opts.forecastFrom * (W - pad - 10) / (xs - 1);
+      html += '<rect x="' + fx + '" y="' + pad + '" width="' + (W - 10 - fx) + '" height="' + (H - pad * 2) + '" fill="rgba(127,119,221,0.08)"/>';
+      html += '<text class="chart-axis-label" x="' + (fx + 4) + '" y="' + (pad + 10) + '" fill="#7F77DD">forecast</text>';
+    }
+    // confidence band (shade) for forecast
+    if (opts.upperBand && opts.lowerBand) {
+      var bandPts = [];
+      opts.upperBand.forEach(function(v, i){
+        var x = pad + i * (W - pad - 10) / (xs - 1);
+        var y = (H - pad) - v * (H - pad * 2);
+        bandPts.push(x + ',' + y);
+      });
+      for (var i = opts.lowerBand.length - 1; i >= 0; i--) {
+        var x = pad + i * (W - pad - 10) / (xs - 1);
+        var y = (H - pad) - opts.lowerBand[i] * (H - pad * 2);
+        bandPts.push(x + ',' + y);
+      }
+      html += '<polygon points="' + bandPts.join(' ') + '" fill="rgba(127,119,221,0.20)" stroke="none"/>';
+    }
+    // line
+    var linePts = pts.map(function(p, i){
+      var x = pad + i * (W - pad - 10) / (xs - 1);
+      var y = (H - pad) - p.y * (H - pad * 2);
+      return x + ',' + y;
+    }).join(' ');
+    var color = opts.color || '#378ADD';
+    html += '<polyline points="' + linePts + '" fill="none" stroke="' + color + '" stroke-width="1.5"/>';
+    // dots for actuals
+    pts.forEach(function(p, i){
+      if (opts.forecastFrom !== undefined && i > opts.forecastFrom) return;
+      var x = pad + i * (W - pad - 10) / (xs - 1);
+      var y = (H - pad) - p.y * (H - pad * 2);
+      html += '<circle cx="' + x + '" cy="' + y + '" r="2" fill="' + color + '"/>';
+    });
+    // anomaly markers
+    if (opts.anomalies) {
+      opts.anomalies.forEach(function(idx){
+        var x = pad + idx * (W - pad - 10) / (xs - 1);
+        var y = (H - pad) - pts[idx].y * (H - pad * 2);
+        html += '<circle cx="' + x + '" cy="' + y + '" r="6" fill="none" stroke="#D85A30" stroke-width="1.5"/>';
+        html += '<circle cx="' + x + '" cy="' + y + '" r="3" fill="#D85A30"/>';
+      });
+    }
+    html += '</svg>';
+    return html;
+  }
+
+  // ============== Page renderers ==============
+  var PAGES = {
+    query: function() {
+      return pageHead('Research · Explore · <b>Query builder</b>', 'Query builder', [
+        { label: 'Save query' }, { label: 'Run', primary: true }
+      ]) +
+      metricRow([
+        { label: 'Total miles', value: '412,809', delta: '+4.2% vs prev' },
+        { label: 'Avg fuel', value: '7.8 L/100km', delta: '+0.3 vs prev', down: true },
+        { label: 'Open issues', value: '23', delta: '−6 vs prev' },
+        { label: 'Active drivers', value: '48', delta: '+2 vs prev' }
+      ]) +
+      '<div class="work-row">' +
+        '<div class="work-card"><h5>Data source <span class="tag">trips table</span></h5>' +
+          '<div class="field-row"><label>Dataset</label><select><option>trips</option><option>drivers</option><option>vehicles</option><option>incidents</option></select></div>' +
+          '<div class="field-row"><label>Date range</label><select><option>Last 30 days</option><option>Last 7 days</option><option>This month</option><option>Custom…</option></select></div>' +
+          '<div class="field-row"><label>Group by</label><select><option>Driver</option><option>Vehicle</option><option>Day</option><option>Week</option></select></div>' +
+          '<div class="field-row"><label>Aggregate</label><select><option>Sum miles</option><option>Avg fuel</option><option>Count trips</option><option>Max speed</option></select></div>' +
+        '</div>' +
+        '<div class="work-card"><h5>Filters <span class="tag">3 active</span></h5>' +
+          '<div class="filter-row"><span class="filter-and">where</span><select><option>miles_driven</option><option>fuel_l</option><option>driver_id</option></select><select><option>&gt;</option><option>&gt;=</option><option>&lt;</option><option>=</option></select><input type="number" value="50" style="width:60px"><button class="x-btn">×</button></div>' +
+          '<div class="filter-row"><span class="filter-and">and</span><select><option>issues_count</option></select><select><option>=</option></select><input type="number" value="0" style="width:60px"><button class="x-btn">×</button></div>' +
+          '<div class="filter-row"><span class="filter-and">and</span><select><option>vehicle_status</option></select><select><option>in</option></select><input type="text" value="active, in_service" style="width:140px"><button class="x-btn">×</button></div>' +
+          '<button class="ghost-btn" type="button" style="margin-top:6px">+ Add filter</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="work-card"><h5>Preview · 412 rows <span class="tag">limit 5</span></h5>' +
+        '<table class="tbl"><thead><tr><th>Driver</th><th>Vehicle</th><th>Trips</th><th>Miles</th><th>Avg fuel</th><th>Issues</th></tr></thead><tbody>' +
+        '<tr><td>M. Rodriguez</td><td>BX-1101</td><td>62</td><td>4,812</td><td>7.2</td><td>0</td></tr>' +
+        '<tr><td>L. Chen</td><td>BX-2204</td><td>58</td><td>3,977</td><td>7.4</td><td>0</td></tr>' +
+        '<tr><td>J. Park</td><td>BX-1908</td><td>61</td><td>4,506</td><td>8.1</td><td>1</td></tr>' +
+        '<tr><td>A. Singh</td><td>BX-3401</td><td>55</td><td>4,201</td><td>9.3</td><td>2</td></tr>' +
+        '<tr><td>D. Okafor</td><td>BX-2890</td><td>49</td><td>3,840</td><td>7.6</td><td>0</td></tr>' +
+        '</tbody></table>' +
+      '</div>';
+    },
+
+    pivot: function() {
+      var rows = ['M. Rodriguez', 'L. Chen', 'J. Park', 'A. Singh', 'D. Okafor', 'K. Müller'];
+      var weeks = ['Wk 1', 'Wk 2', 'Wk 3', 'Wk 4'];
+      var data = [
+        [1180, 1240, 1190, 1202],
+        [ 980, 1020,  990, 987],
+        [1100, 1150, 1120, 1136],
+        [1010, 1080, 1050, 1061],
+        [ 940,  980,  960, 960],
+        [ 850,  890,  870, 880]
+      ];
+      var max = 1300;
+      var html = pageHead('Research · Explore · <b>Pivot table</b>', 'Pivot table', [
+        { label: 'Swap axes' }, { label: 'Export CSV' }
+      ]);
+      html += '<div class="work-row">' +
+        '<div class="work-card"><h5>Configuration</h5>' +
+        '<div class="field-row"><label>Rows</label><select><option>Driver</option><option>Vehicle</option></select></div>' +
+        '<div class="field-row"><label>Columns</label><select><option>Week</option><option>Day</option><option>Month</option></select></div>' +
+        '<div class="field-row"><label>Values</label><select><option>Sum miles</option><option>Avg fuel</option><option>Count issues</option></select></div>' +
+        '<div class="field-row"><label>Filter</label><select><option>All vehicles</option></select></div>' +
+        '</div>' +
+        '<div class="work-card"><h5>Highlights</h5>' +
+        '<p style="font-size:12px;color:var(--text-secondary);line-height:1.6;margin:0">' +
+          'M. Rodriguez leads every week with 1,180–1,240 miles. K. Müller consistently lowest at 850–890. Wk 2 is the strongest week across the board.' +
+        '</p></div></div>';
+
+      html += '<div class="work-card"><h5>Miles driven, by driver × week <span class="tag">last 4 weeks</span></h5>' +
+        '<table class="pivot-table"><thead><tr><th></th>';
+      weeks.forEach(function(w){ html += '<th>' + w + '</th>'; });
+      html += '<th>Total</th></tr></thead><tbody>';
+      rows.forEach(function(r, i){
+        var total = data[i].reduce(function(a, b){ return a + b; }, 0);
+        html += '<tr><td>' + r + '</td>';
+        data[i].forEach(function(v){
+          var pct = v / max;
+          html += '<td class="pivot-cell-shade"><span class="shade" style="opacity:' + (pct * 0.9).toFixed(2) + '"></span><span class="v">' + v.toLocaleString() + '</span></td>';
+        });
+        html += '<td><strong>' + total.toLocaleString() + '</strong></td></tr>';
+      });
+      // totals row
+      html += '<tr class="total"><td>Total</td>';
+      var grand = 0;
+      for (var c = 0; c < weeks.length; c++) {
+        var sum = data.reduce(function(a, row){ return a + row[c]; }, 0);
+        grand += sum;
+        html += '<td>' + sum.toLocaleString() + '</td>';
+      }
+      html += '<td>' + grand.toLocaleString() + '</td></tr>';
+      html += '</tbody></table></div>';
+      return html;
+    },
+
+    cohorts: function() {
+      var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+      var cohorts = [
+        { name: 'Jan 2026 hires', size: 8, retention: [100, 95, 88, 84, 80, 75] },
+        { name: 'Feb 2026 hires', size: 6, retention: [100, 92, 85, 80, 76, null] },
+        { name: 'Mar 2026 hires', size: 5, retention: [100, 90, 86, 82, null, null] },
+        { name: 'Apr 2026 hires', size: 7, retention: [100, 94, 90, null, null, null] },
+        { name: 'May 2026 hires', size: 4, retention: [100, 88, null, null, null, null] },
+        { name: 'Jun 2026 hires', size: 9, retention: [100, null, null, null, null, null] }
+      ];
+      var html = pageHead('Research · Explore · <b>Cohorts</b>', 'Driver cohorts', [
+        { label: 'Change cohort' }, { label: 'Export' }
+      ]);
+      html += '<div class="work-card" style="margin-bottom:10px"><h5>Configuration</h5>' +
+        '<div class="field-row"><label>Cohort by</label><select><option>Hire month</option><option>Vehicle assigned</option><option>Region</option></select></div>' +
+        '<div class="field-row"><label>Metric</label><select><option>% still active</option><option>Avg miles</option><option>Issue rate</option></select></div>' +
+        '<div class="field-row"><label>Period</label><select><option>Monthly</option><option>Weekly</option></select></div>' +
+        '</div>';
+
+      html += '<div class="work-card"><h5>Driver retention by hire cohort <span class="tag">% still active</span></h5>';
+      html += '<div class="cohort-grid" style="grid-template-columns: 130px 50px repeat(' + months.length + ', 1fr)">';
+      html += '<div class="cohort-headcell" style="text-align:left;padding-left:8px">Cohort</div><div class="cohort-headcell">Size</div>';
+      months.forEach(function(m, i){ html += '<div class="cohort-headcell">M' + i + '</div>'; });
+      cohorts.forEach(function(c){
+        html += '<div class="cohort-label">' + c.name + '</div>';
+        html += '<div class="cohort-headcell" style="background:var(--bg-muted);border-radius:2px">' + c.size + '</div>';
+        c.retention.forEach(function(v){
+          if (v === null) {
+            html += '<div class="cohort-headcell" style="opacity:0.3">—</div>';
+          } else {
+            var op = (v / 100) * 0.9 + 0.1;
+            html += '<div class="cohort-cell" style="opacity:' + op.toFixed(2) + '">' + v + '%</div>';
+          }
+        });
+      });
+      html += '</div>';
+      html += '<p style="font-size:11px;color:var(--text-tertiary);margin:10px 0 0">M0 = month of hire. Cells show % of cohort still actively driving N months later.</p>';
+      html += '</div>';
+      return html;
+    },
+
+    sql: function() {
+      var sql = '<span class="com">-- Top 10 drivers by total miles in the last 30 days,</span>\n' +
+                '<span class="com">-- with their fuel efficiency and open issue count.</span>\n' +
+                '<span class="kw">SELECT</span>\n' +
+                '  d.driver_id,\n' +
+                '  d.name,\n' +
+                '  <span class="fn">SUM</span>(t.miles_driven)        <span class="kw">AS</span> total_miles,\n' +
+                '  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(t.fuel_l_per_100km), <span class="num">1</span>) <span class="kw">AS</span> avg_fuel,\n' +
+                '  <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> i.issue_id) <span class="kw">AS</span> open_issues\n' +
+                '<span class="kw">FROM</span> trips t\n' +
+                '<span class="kw">JOIN</span> drivers d <span class="kw">ON</span> d.driver_id = t.driver_id\n' +
+                '<span class="kw">LEFT JOIN</span> incidents i\n' +
+                '  <span class="kw">ON</span> i.driver_id = d.driver_id\n' +
+                '  <span class="kw">AND</span> i.status = <span class="str">\'open\'</span>\n' +
+                '<span class="kw">WHERE</span> t.trip_date &gt;= <span class="fn">CURRENT_DATE</span> - <span class="kw">INTERVAL</span> <span class="str">\'30 days\'</span>\n' +
+                '<span class="kw">GROUP BY</span> d.driver_id, d.name\n' +
+                '<span class="kw">ORDER BY</span> total_miles <span class="kw">DESC</span>\n' +
+                '<span class="kw">LIMIT</span> <span class="num">10</span>;';
+      var html = pageHead('Research · Explore · <b>SQL console</b>', 'SQL console', [
+        { label: 'Format' }, { label: 'Save' }, { label: 'Run query', primary: true }
+      ]);
+      html += '<div class="work-row">' +
+        '<div class="work-card" style="grid-column: 1 / -1; padding: 0; overflow: hidden">' +
+          '<div class="sql-editor">' + sql + '</div>' +
+          '<div class="console-bar"><span>Connected · fleet_warehouse</span><span>10 rows · 84ms</span></div>' +
+        '</div></div>';
+      html += '<div class="work-card"><h5>Results <span class="tag">10 rows</span></h5>' +
+        '<table class="tbl"><thead><tr><th>driver_id</th><th>name</th><th>total_miles</th><th>avg_fuel</th><th>open_issues</th></tr></thead><tbody>' +
+        '<tr><td>1042</td><td>M. Rodriguez</td><td>4812</td><td>7.2</td><td>0</td></tr>' +
+        '<tr><td>1078</td><td>J. Park</td><td>4506</td><td>8.1</td><td>1</td></tr>' +
+        '<tr><td>1023</td><td>A. Singh</td><td>4201</td><td>9.3</td><td>2</td></tr>' +
+        '<tr><td>1099</td><td>L. Chen</td><td>3977</td><td>7.4</td><td>0</td></tr>' +
+        '<tr><td>1056</td><td>D. Okafor</td><td>3840</td><td>7.6</td><td>0</td></tr>' +
+        '<tr><td>1031</td><td>K. Müller</td><td>3490</td><td>8.4</td><td>1</td></tr>' +
+        '<tr><td>1107</td><td>R. Petrov</td><td>3380</td><td>7.9</td><td>0</td></tr>' +
+        '</tbody></table></div>';
+      return html;
+    },
+
+    trend: function() {
+      var actuals = [0.50, 0.55, 0.48, 0.60, 0.58, 0.65, 0.62, 0.70, 0.68, 0.72, 0.75, 0.78, 0.74, 0.80];
+      var forecast = [null, null, null, null, null, null, null, null, null, null, null, null, null, null, 0.83, 0.86, 0.84, 0.88, 0.91];
+      var lower    = [null, null, null, null, null, null, null, null, null, null, null, null, null, null, 0.78, 0.79, 0.76, 0.78, 0.80];
+      var upper    = [null, null, null, null, null, null, null, null, null, null, null, null, null, null, 0.88, 0.93, 0.92, 0.97, 1.00];
+      var pts = [];
+      actuals.forEach(function(v){ pts.push({ y: v }); });
+      forecast.forEach(function(v){ if (v !== null) pts.push({ y: v }); });
+      // Build full upper/lower aligned with pts
+      var upperFull = pts.map(function(p, i){ return i < actuals.length ? p.y : upper[i]; });
+      var lowerFull = pts.map(function(p, i){ return i < actuals.length ? p.y : lower[i]; });
+      var labels = [];
+      for (var i = 0; i < pts.length; i++) {
+        labels.push(i % 3 === 0 ? ('D' + (i + 1)) : '');
+      }
+
+      var html = pageHead('Research · Analyse · <b>Trend &amp; forecast</b>', 'Trend &amp; forecast', [
+        { label: 'Change metric' }, { label: 'Export forecast' }
+      ]);
+      html += '<div class="work-row">' +
+        '<div class="work-card"><h5>Configuration</h5>' +
+          '<div class="field-row"><label>Metric</label><select><option>Daily miles driven</option><option>Fuel cost</option><option>Issues per day</option></select></div>' +
+          '<div class="field-row"><label>History</label><select><option>Last 14 days</option><option>Last 30 days</option><option>Last 90 days</option></select></div>' +
+          '<div class="field-row"><label>Forecast</label><select><option>Next 5 days</option><option>Next 14 days</option><option>Next 30 days</option></select></div>' +
+          '<div class="field-row"><label>Model</label><select><option>Holt-Winters</option><option>Linear regression</option><option>Prophet</option></select></div>' +
+        '</div>' +
+        '<div class="work-card"><h5>Forecast summary</h5>' +
+          '<table class="tbl"><tbody>' +
+          '<tr><td>Trend direction</td><td style="text-align:right;color:var(--text-success)">↑ rising</td></tr>' +
+          '<tr><td>Daily growth rate</td><td style="text-align:right">+1.8%</td></tr>' +
+          '<tr><td>R²</td><td style="text-align:right">0.91</td></tr>' +
+          '<tr><td>Confidence interval</td><td style="text-align:right">90%</td></tr>' +
+          '<tr><td>Next 5d projection</td><td style="text-align:right">~14,200 mi</td></tr>' +
+          '</tbody></table>' +
+        '</div></div>';
+
+      html += '<div class="work-card"><h5>Daily miles driven · history + forecast <span class="tag">14 + 5 days</span></h5>' +
+        '<div class="chart-shell tall">' + lineChart({
+          points: pts, xLabels: labels,
+          yMax: 1000,
+          forecastFrom: actuals.length - 1,
+          upperBand: upperFull, lowerBand: lowerFull,
+          color: '#378ADD'
+        }) + '</div>' +
+      '</div>';
+      return html;
+    },
+
+    anomaly: function() {
+      var pts = [{y:0.50},{y:0.55},{y:0.48},{y:0.60},{y:0.58},{y:0.92},{y:0.62},{y:0.70},{y:0.68},{y:0.20},{y:0.75},{y:0.78},{y:0.74},{y:0.95}];
+      var labels = pts.map(function(p, i){ return i % 2 === 0 ? ('D' + (i + 1)) : ''; });
+      var html = pageHead('Research · Analyse · <b>Anomaly detection</b>', 'Anomaly detection', [
+        { label: 'Tune sensitivity' }, { label: 'Acknowledge all' }
+      ]);
+      html += metricRow([
+        { label: 'Anomalies detected', value: '4', delta: '+2 last 7d', down: true },
+        { label: 'Sensitivity', value: 'Medium' },
+        { label: 'Method', value: 'Z-score' },
+        { label: 'Lookback', value: '30 days' }
+      ]);
+      html += '<div class="work-card"><h5>Daily miles driven with anomalies <span class="tag">3σ threshold</span></h5>' +
+        '<div class="chart-shell">' + lineChart({
+          points: pts, xLabels: labels, yMax: 1000,
+          anomalies: [5, 9, 13], color: '#378ADD'
+        }) + '</div></div>';
+      html += '<div class="work-card"><h5>Anomalies detected <span class="tag">last 14 days</span></h5>' +
+        '<div style="font-size:12px">' +
+        '<div class="anom-row"><span class="anom-sev" style="background:var(--coral)"></span><span class="anom-when">2 days ago</span>' +
+        '<span class="anom-desc"><strong>BX-3401</strong> · fuel use spike, 14.2 L/100km vs avg 7.8</span><span class="anom-z">z=4.1</span><button class="ghost-btn" type="button">Investigate</button></div>' +
+        '<div class="anom-row"><span class="anom-sev" style="background:var(--coral)"></span><span class="anom-when">3 days ago</span>' +
+        '<span class="anom-desc"><strong>A. Singh</strong> · zero trips logged on a workday</span><span class="anom-z">z=3.6</span><button class="ghost-btn" type="button">Investigate</button></div>' +
+        '<div class="anom-row"><span class="anom-sev" style="background:var(--amber)"></span><span class="anom-when">5 days ago</span>' +
+        '<span class="anom-desc"><strong>BX-2218</strong> · sudden mileage jump after low week</span><span class="anom-z">z=2.8</span><button class="ghost-btn" type="button">Investigate</button></div>' +
+        '<div class="anom-row"><span class="anom-sev" style="background:var(--amber)"></span><span class="anom-when">8 days ago</span>' +
+        '<span class="anom-desc">Fleet-wide miles dropped 32% — possible holiday effect</span><span class="anom-z">z=2.4</span><button class="ghost-btn" type="button">Investigate</button></div>' +
+        '</div></div>';
+      return html;
+    },
+
+    scoring: function() {
+      var drivers = [
+        { name: 'M. Rodriguez', score: 96, cls: 'good', miles: 4812, issues: 0,
+          metrics: [['Safety', 98], ['Efficiency', 94], ['Punctuality', 96], ['Care', 95]] },
+        { name: 'L. Chen', score: 94, cls: 'good', miles: 3977, issues: 0,
+          metrics: [['Safety', 96], ['Efficiency', 92], ['Punctuality', 94], ['Care', 93]] },
+        { name: 'J. Park', score: 92, cls: 'good', miles: 4506, issues: 1,
+          metrics: [['Safety', 90], ['Efficiency', 95], ['Punctuality', 92], ['Care', 90]] },
+        { name: 'A. Singh', score: 78, cls: 'mid', miles: 4201, issues: 2,
+          metrics: [['Safety', 75], ['Efficiency', 70], ['Punctuality', 85], ['Care', 80]] },
+        { name: 'D. Okafor', score: 85, cls: 'mid', miles: 3840, issues: 0,
+          metrics: [['Safety', 88], ['Efficiency', 82], ['Punctuality', 86], ['Care', 84]] },
+        { name: 'K. Müller', score: 62, cls: 'bad', miles: 3490, issues: 4,
+          metrics: [['Safety', 55], ['Efficiency', 60], ['Punctuality', 70], ['Care', 65]] }
+      ];
+      var html = pageHead('Research · Analyse · <b>Driver scoring</b>', 'Driver scoring', [
+        { label: 'Adjust weights' }, { label: 'Export ranking' }
+      ]);
+      html += metricRow([
+        { label: 'Avg fleet score', value: '84.5', delta: '+2.1 vs prev' },
+        { label: 'Top performer', value: '96', delta: 'M. Rodriguez' },
+        { label: 'Below threshold', value: '1', delta: 'needs review', down: true },
+        { label: 'Drivers scored', value: '52' }
+      ]);
+      html += '<div class="work-card" style="margin-bottom:10px"><h5>Score weighting</h5>' +
+        '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;font-size:12px">' +
+        '<div><div style="color:var(--text-secondary);margin-bottom:4px">Safety</div><input type="range" min="0" max="100" value="40" style="width:100%"><div style="font-size:10px;color:var(--text-tertiary)">40%</div></div>' +
+        '<div><div style="color:var(--text-secondary);margin-bottom:4px">Efficiency</div><input type="range" min="0" max="100" value="25" style="width:100%"><div style="font-size:10px;color:var(--text-tertiary)">25%</div></div>' +
+        '<div><div style="color:var(--text-secondary);margin-bottom:4px">Punctuality</div><input type="range" min="0" max="100" value="20" style="width:100%"><div style="font-size:10px;color:var(--text-tertiary)">20%</div></div>' +
+        '<div><div style="color:var(--text-secondary);margin-bottom:4px">Vehicle care</div><input type="range" min="0" max="100" value="15" style="width:100%"><div style="font-size:10px;color:var(--text-tertiary)">15%</div></div>' +
+        '</div></div>';
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+      drivers.forEach(function(d){
+        html += '<div class="score-card">' +
+          '<div class="score-circle ' + d.cls + '">' + d.score + '</div>' +
+          '<div style="flex:1;min-width:0">' +
+          '<div class="score-name">' + d.name + '</div>' +
+          '<div class="score-meta">' + d.miles.toLocaleString() + ' mi · ' + d.issues + ' issues</div>' +
+          '<div class="score-bars">';
+        d.metrics.forEach(function(m){
+          html += '<div class="score-bar-row"><span>' + m[0] + '</span><span class="score-bar"><span class="score-bar-fill" style="width:' + m[1] + '%"></span></span><span style="text-align:right">' + m[1] + '</span></div>';
+        });
+        html += '</div></div></div>';
+      });
+      html += '</div>';
+      return html;
+    },
+
+    correlation: function() {
+      var fields = ['Miles/day', 'Fuel rate', 'Driver score', 'Issues', 'Avg speed', 'Idle time', 'Trips/day'];
+      // Symmetric correlation matrix (made up but plausible)
+      var corr = [
+        [ 1.00,  0.18,  0.21, -0.32,  0.45, -0.28,  0.78],
+        [ 0.18,  1.00, -0.62,  0.55,  0.41,  0.38, -0.05],
+        [ 0.21, -0.62,  1.00, -0.71, -0.18, -0.44,  0.25],
+        [-0.32,  0.55, -0.71,  1.00,  0.12,  0.51, -0.22],
+        [ 0.45,  0.41, -0.18,  0.12,  1.00, -0.35,  0.32],
+        [-0.28,  0.38, -0.44,  0.51, -0.35,  1.00, -0.41],
+        [ 0.78, -0.05,  0.25, -0.22,  0.32, -0.41,  1.00]
+      ];
+      function colorFor(v) {
+        var abs = Math.abs(v);
+        var color = v > 0 ? '55,138,221' : '216,90,48';
+        return 'rgba(' + color + ',' + (abs * 0.85).toFixed(2) + ')';
+      }
+      var html = pageHead('Research · Analyse · <b>Correlation matrix</b>', 'Correlation matrix', [
+        { label: 'Change fields' }, { label: 'Export' }
+      ]);
+      html += '<div class="work-row">' +
+        '<div class="work-card"><h5>Inputs</h5>' +
+          '<div class="field-row"><label>Dataset</label><select><option>Daily fleet metrics</option><option>Driver-level metrics</option></select></div>' +
+          '<div class="field-row"><label>Method</label><select><option>Pearson</option><option>Spearman</option></select></div>' +
+          '<div class="field-row"><label>Period</label><select><option>Last 30 days</option><option>Last 90 days</option></select></div>' +
+          '<div class="field-row"><label>Min |r|</label><input type="number" value="0.0" step="0.1" style="width:60px"></div>' +
+        '</div>' +
+        '<div class="work-card"><h5>Strongest relationships</h5>' +
+          '<ul style="margin:0;padding-left:18px;font-size:12px;line-height:1.7;color:var(--text-secondary)">' +
+          '<li>Miles/day ↔ Trips/day · <strong style="color:var(--text-primary)">+0.78</strong> (expected)</li>' +
+          '<li>Driver score ↔ Issues · <strong style="color:var(--text-primary)">−0.71</strong> (lower issues, higher score)</li>' +
+          '<li>Fuel rate ↔ Driver score · <strong style="color:var(--text-primary)">−0.62</strong></li>' +
+          '<li>Issues ↔ Fuel rate · <strong style="color:var(--text-primary)">+0.55</strong></li>' +
+          '</ul></div></div>';
+
+      html += '<div class="work-card"><h5>Pearson correlation across fleet metrics</h5>' +
+        '<table class="corr-table"><thead><tr><th></th>';
+      fields.forEach(function(f){ html += '<th>' + f + '</th>'; });
+      html += '</tr></thead><tbody>';
+      corr.forEach(function(row, i){
+        html += '<tr><td>' + fields[i] + '</td>';
+        row.forEach(function(v, j){
+          var bg = colorFor(v);
+          html += '<td class="corr-cell"><span class="corr-bg" style="background:' + bg + '"></span><span class="corr-v">' + v.toFixed(2) + '</span></td>';
+        });
+        html += '</tr>';
+      });
+      html += '</tbody></table>' +
+        '<p style="font-size:11px;color:var(--text-tertiary);margin:10px 0 0">Blue = positive correlation. Coral = negative. Cell intensity = strength.</p>' +
+        '</div>';
+      return html;
+    },
+
+    report: function() {
+      var html = pageHead('Research · Deliver · <b>Report builder</b>', 'Report builder', [
+        { label: 'Preview' }, { label: 'Save draft' }, { label: 'Publish', primary: true }
+      ]);
+      html += '<div class="report-builder">' +
+        '<div class="block-palette">' +
+          '<h6>Drag blocks in</h6>' +
+          '<div class="palette-item"><span class="pi-icon"></span>Title</div>' +
+          '<div class="palette-item"><span class="pi-icon" style="background:#378ADD"></span>KPI row</div>' +
+          '<div class="palette-item"><span class="pi-icon" style="background:#1D9E75"></span>Line chart</div>' +
+          '<div class="palette-item"><span class="pi-icon" style="background:#7F77DD"></span>Bar chart</div>' +
+          '<div class="palette-item"><span class="pi-icon" style="background:#BA7517"></span>Table</div>' +
+          '<div class="palette-item"><span class="pi-icon" style="background:#D85A30"></span>Issues list</div>' +
+          '<div class="palette-item"><span class="pi-icon" style="background:#888780"></span>Text block</div>' +
+          '<div class="palette-item"><span class="pi-icon" style="background:#888780"></span>Page break</div>' +
+        '</div>' +
+        '<div class="report-canvas">' +
+          '<div class="report-block title">' +
+            '<span class="rb-label">Title</span>' +
+            '<h3>Monthly fleet performance · April 2026</h3>' +
+            '<p>Prepared for: Operations leadership · Generated: April 30, 2026</p>' +
+          '</div>' +
+          '<div class="report-block">' +
+            '<span class="rb-label">KPI row</span>' +
+            metricRow([
+              { label: 'Miles', value: '412,809', delta: '+4.2%' },
+              { label: 'Fuel', value: '7.8', delta: '+0.3', down: true },
+              { label: 'Issues', value: '23', delta: '−6' },
+              { label: 'Drivers', value: '48', delta: '+2' }
+            ]) +
+          '</div>' +
+          '<div class="report-block">' +
+            '<span class="rb-label">Line chart</span>' +
+            '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px">Daily miles driven</div>' +
+            '<div style="height:120px">' + lineChart({
+              points: [{y:0.5},{y:0.6},{y:0.55},{y:0.65},{y:0.7},{y:0.68},{y:0.75},{y:0.78},{y:0.8}],
+              xLabels: ['', '', '', '', '', '', '', '', ''], yMax: 1000
+            }) + '</div>' +
+          '</div>' +
+          '<div class="report-block">' +
+            '<span class="rb-label">Text block</span>' +
+            '<p style="font-size:12px;line-height:1.6;margin:0;color:var(--text-secondary)">Mileage rose 4.2% month over month, driven primarily by the new Northeast contracts. Fuel efficiency degraded slightly (+0.3 L/100km) due to two underperforming vehicles flagged in the issues section.</p>' +
+          '</div>' +
+        '</div></div>';
+      return html;
+    },
+
+    schedule: function() {
+      var html = pageHead('Research · Deliver · <b>Scheduled exports</b>', 'Scheduled exports', [
+        { label: '+ New schedule', primary: true }
+      ]);
+      html += metricRow([
+        { label: 'Active schedules', value: '6' },
+        { label: 'Sent last 7 days', value: '24' },
+        { label: 'Failed', value: '1', delta: 'tyre alert', down: true },
+        { label: 'Next run', value: 'in 4h 12m' }
+      ]);
+      html += '<div class="work-card"><h5>Schedules</h5>';
+      var schedules = [
+        { name: 'Weekly fleet summary',  meta: 'Every Monday at 08:00 · CSV + PDF · 5 recipients', next: 'Mon 08:00', status: 'on' },
+        { name: 'Daily issues digest',   meta: 'Every day at 18:00 · Email · ops@company.com',     next: 'Today 18:00', status: 'on' },
+        { name: 'Driver scorecard',      meta: 'First of each month · PDF · HR distribution',     next: 'May 1', status: 'on' },
+        { name: 'Fuel cost alert',       meta: 'When avg fuel &gt; 8.5 L/100km · Slack #fleet',    next: 'On trigger', status: 'warn' },
+        { name: 'Quarterly board pack',  meta: 'First day of quarter · PDF · 12 recipients',      next: 'Jul 1', status: 'on' },
+        { name: 'Old anomaly digest',    meta: 'Disabled · Was: every Friday',                    next: '—', status: 'off' }
+      ];
+      schedules.forEach(function(s){
+        var badgeText = s.status === 'on' ? 'Active' : s.status === 'off' ? 'Paused' : 'Conditional';
+        html += '<div class="schedule-row">' +
+          '<div><div class="sr-name">' + s.name + '</div><div class="sr-meta">' + s.meta + '</div></div>' +
+          '<span class="badge ' + s.status + '">' + badgeText + '</span>' +
+          '<span style="font-size:11px;color:var(--text-tertiary)">Next: ' + s.next + '</span>' +
+          '<button class="ghost-btn" type="button">Edit</button>' +
+          '<button class="ghost-btn" type="button">Run now</button>' +
+          '</div>';
+      });
+      html += '</div>';
+      return html;
+    },
+
+    views: function() {
+      var html = pageHead('Research · Deliver · <b>Saved views</b>', 'Saved views', [
+        { label: 'Sort by recent' }, { label: '+ New view', primary: true }
+      ]);
+      html += metricRow([
+        { label: 'Saved views', value: '14' },
+        { label: 'Shared with team', value: '6' },
+        { label: 'Pinned', value: '3' },
+        { label: 'Used last 7 days', value: '11' }
+      ]);
+      html += '<div class="work-card"><h5>Your views</h5><div class="view-grid">';
+      var views = [
+        { title: 'High-mileage drivers',     desc: 'Drivers above 4,000 mi in the last 30 days. Sorted by safety score.', source: 'Query builder', when: 'Today',     pinned: true },
+        { title: 'Vehicles needing service', desc: 'Open service tickets older than 7 days. Includes plate, issue, days open.', source: 'Query builder', when: 'Yesterday', pinned: true },
+        { title: 'Weekly mileage pivot',     desc: 'Driver × week pivot of total miles for the last 4 weeks.',           source: 'Pivot table',   when: '3 days ago', pinned: false },
+        { title: 'Fuel anomaly watchlist',   desc: 'Vehicles with z-score > 2 on fuel consumption in the last 14 days.', source: 'Anomaly detection', when: '4 days ago', pinned: true },
+        { title: 'New driver retention',     desc: 'Hire-month cohorts, percent still active by month-since-hire.',     source: 'Cohorts',       when: '1 week ago', pinned: false },
+        { title: 'Score forecast Q3',        desc: 'Holt-Winters projection of fleet-average driver score.',             source: 'Trend & forecast', when: '2 weeks ago', pinned: false },
+        { title: 'Driver-issue correlation', desc: 'Pearson matrix focused on driver-level metrics only.',                source: 'Correlation matrix', when: '3 weeks ago', pinned: false },
+        { title: 'Top 10 by miles · SQL',    desc: 'Custom SQL query joining trips, drivers, and incidents.',            source: 'SQL console',   when: '1 month ago', pinned: false }
+      ];
+      views.forEach(function(v){
+        html += '<div class="view-card">' +
+          '<div class="vc-title">' + v.title + (v.pinned ? ' <span class="badge on">pinned</span>' : '') + '</div>' +
+          '<div class="vc-desc">' + v.desc + '</div>' +
+          '<div class="vc-meta"><span>' + v.source + '</span><span>' + v.when + '</span></div>' +
+          '</div>';
+      });
+      html += '</div></div>';
+      return html;
+    }
+  };
+
+  function showPage(key) {
+    researchMain.innerHTML = (PAGES[key] || PAGES.query)();
+  }
+
+  // wire sidebar
+  document.querySelectorAll('.analysis-side .side-item').forEach(function(it){
+    it.addEventListener('click', function(){
+      document.querySelectorAll('.analysis-side .side-item').forEach(function(x){ x.classList.remove('active'); });
+      it.classList.add('active');
+      showPage(it.dataset.page);
+    });
+  });
+
+  // initial render
+  showPage('query');
+})();
+
+/* =====================================================================
+   AUTH — sign-in / sign-up / SSO + signed-out top-level toggle
+   ===================================================================== */
+(function(){
+  var formHost = document.getElementById('auth-form-host');
+
+  var FORMS = {
+    signin: function() {
+      return '<div class="auth-form">' +
+        '<h2>Welcome back</h2>' +
+        '<p class="auth-sub">Sign in to your fleet operations workspace.</p>' +
+        '<div class="auth-field"><label>Work email</label>' +
+          '<input type="email" placeholder="you@company.com" value="m.rodriguez@acme-logistics.com"></div>' +
+        '<div class="auth-field"><label>Password</label>' +
+          '<input type="password" placeholder="••••••••" value="hunter2demo"></div>' +
+        '<div class="auth-row">' +
+          '<label class="auth-checkbox"><input type="checkbox" checked> Stay signed in</label>' +
+          '<a href="#">Forgot password?</a>' +
+        '</div>' +
+        '<button class="auth-submit" type="button" id="do-signin">Sign in</button>' +
+        '<div class="auth-divider">or continue with</div>' +
+        '<div class="auth-sso-list">' +
+          ssoButton('Google', 'G', '#D85A30') +
+          ssoButton('Microsoft', 'M', '#185FA5') +
+          ssoButton('Okta', 'O', '#0F6E56') +
+          ssoButton('SAML SSO', 'S', '#5F5E5A') +
+        '</div>' +
+        '<div class="auth-bottom-note">No account yet? <a href="#" data-go="signup">Create one</a></div>' +
+      '</div>';
+    },
+    signup: function() {
+      return '<div class="auth-form">' +
+        '<h2>Create your workspace</h2>' +
+        '<p class="auth-sub">Set up a fleet operations workspace for your team. 14-day free trial.</p>' +
+        '<div class="auth-field"><label>Full name</label>' +
+          '<input type="text" placeholder="Your name"></div>' +
+        '<div class="auth-field"><label>Work email</label>' +
+          '<input type="email" placeholder="you@company.com"></div>' +
+        '<div class="auth-field"><label>Company name</label>' +
+          '<input type="text" placeholder="Acme Logistics"></div>' +
+        '<div class="auth-field"><label>Password</label>' +
+          '<input type="password" placeholder="At least 12 characters" id="signup-pw">' +
+          '<div class="auth-strength" id="pw-strength">' +
+            '<span></span><span></span><span></span><span></span>' +
+          '</div>' +
+          '<div class="auth-help">Use 12+ characters with a mix of letters, numbers, and symbols.</div>' +
+        '</div>' +
+        '<div class="auth-row">' +
+          '<label class="auth-checkbox"><input type="checkbox"> I agree to the <a href="#">Terms</a> and <a href="#">Privacy policy</a></label>' +
+        '</div>' +
+        '<button class="auth-submit" type="button" id="do-signup">Create workspace</button>' +
+        '<div class="auth-divider">or sign up with</div>' +
+        '<div class="auth-sso-list">' +
+          ssoButton('Google', 'G', '#D85A30') +
+          ssoButton('Microsoft', 'M', '#185FA5') +
+        '</div>' +
+        '<div class="auth-bottom-note">Already have an account? <a href="#" data-go="signin">Sign in</a></div>' +
+      '</div>';
+    },
+    sso: function() {
+      return '<div class="auth-form">' +
+        '<h2>Single sign-on</h2>' +
+        '<p class="auth-sub">Use your organization\'s identity provider to sign in.</p>' +
+        '<div class="auth-field"><label>Workspace URL</label>' +
+          '<input type="text" placeholder="acme-logistics" value="acme-logistics">' +
+          '<div class="auth-help">Your workspace URL is the prefix in <code style="font-family:ui-monospace,monospace;font-size:11px">[workspace].fleetops.app</code></div>' +
+        '</div>' +
+        '<button class="auth-submit" type="button" id="do-sso">Continue with SSO</button>' +
+        '<div class="auth-divider">or pick a recent organization</div>' +
+        '<div class="sso-list-block">' +
+          ssoOrgRow('AC', 'Acme Logistics', 'Okta · last used today') +
+          ssoOrgRow('NW', 'Northwind Transport', 'Microsoft Entra · 3 days ago') +
+          ssoOrgRow('GR', 'Greenfield Fleet Co.', 'Google Workspace · 2 weeks ago') +
+        '</div>' +
+        '<div class="auth-bottom-note">Don\'t have SSO? <a href="#" data-go="signin">Sign in with email</a></div>' +
+      '</div>';
+    }
+  };
+
+  function ssoButton(name, letter, color) {
+    return '<button class="auth-sso-btn" type="button">' +
+      '<span class="auth-sso-icon" style="background:' + color + '">' + letter + '</span>' +
+      'Continue with ' + name + '</button>';
+  }
+  function ssoOrgRow(initials, name, meta) {
+    return '<div class="sso-org-row">' +
+      '<span class="sso-org-icon">' + initials + '</span>' +
+      '<span class="sso-org-info"><div class="sso-org-name">' + name + '</div>' +
+      '<div class="sso-org-desc">' + meta + '</div></span>' +
+      '<span class="sso-org-arrow">›</span></div>';
+  }
+
+  function setMode(mode) {
+    document.querySelectorAll('.auth-mode-tab').forEach(function(t){
+      t.classList.toggle('active', t.dataset.mode === mode);
+    });
+    formHost.innerHTML = (FORMS[mode] || FORMS.signin)();
+    // Wire post-render handlers
+    formHost.querySelectorAll('[data-go]').forEach(function(a){
+      a.addEventListener('click', function(e){
+        e.preventDefault();
+        setMode(a.dataset.go);
+      });
+    });
+    var pw = document.getElementById('signup-pw');
+    if (pw) {
+      var strength = document.getElementById('pw-strength').children;
+      pw.addEventListener('input', function(){
+        var s = scorePw(pw.value);
+        for (var i = 0; i < 4; i++) {
+          strength[i].className = i < s ? ('on-' + s) : '';
+        }
+      });
+    }
+    var doSignin = document.getElementById('do-signin');
+    if (doSignin) doSignin.addEventListener('click', function(){ goSignedIn(); });
+    var doSignup = document.getElementById('do-signup');
+    if (doSignup) doSignup.addEventListener('click', function(){ goSignedIn(); });
+    var doSso = document.getElementById('do-sso');
+    if (doSso) doSso.addEventListener('click', function(){ goSignedIn(); });
+    formHost.querySelectorAll('.auth-sso-btn, .sso-org-row').forEach(function(el){
+      el.addEventListener('click', function(){ goSignedIn(); });
+    });
+  }
+  function scorePw(s) {
+    var score = 0;
+    if (s.length >= 8) score++;
+    if (s.length >= 12) score++;
+    if (/[A-Z]/.test(s) && /[a-z]/.test(s)) score++;
+    if (/[0-9]/.test(s) && /[^A-Za-z0-9]/.test(s)) score++;
+    return Math.min(4, score);
+  }
+
+  document.querySelectorAll('.auth-mode-tab').forEach(function(t){
+    t.addEventListener('click', function(){ setMode(t.dataset.mode); });
+  });
+
+  // Top-level signed-out / signed-in toggle
+  var screenAuth = document.getElementById('screen-auth');
+  var screenDash = document.getElementById('screen-dash');
+  var screenResearch = document.getElementById('screen-research');
+  var menuHost = document.getElementById('menu-host');
+  var hint = document.querySelector('#screen-dash .hint');
+  var signedInOnly = document.querySelector('.signed-in-only');
+
+  function showSignedOut() {
+    screenAuth.style.display = 'block';
+    screenDash.style.display = 'none';
+    screenResearch.style.display = 'none';
+    if (signedInOnly) signedInOnly.style.display = 'none';
+    document.getElementById('view-loggedout').classList.add('active');
+    document.getElementById('view-loggedin').classList.remove('active');
+  }
+  function showSignedIn() {
+    screenAuth.style.display = 'none';
+    if (signedInOnly) signedInOnly.style.display = 'block';
+    // restore whichever screen tab is active
+    var activeTab = document.querySelector('.tab.active');
+    var s = activeTab ? activeTab.dataset.screen : 'dash';
+    screenDash.style.display = s === 'dash' ? 'block' : 'none';
+    screenResearch.style.display = s === 'research' ? 'block' : 'none';
+    document.getElementById('view-loggedout').classList.remove('active');
+    document.getElementById('view-loggedin').classList.add('active');
+  }
+  function goSignedIn() { showSignedIn(); }
+
+  document.getElementById('view-loggedout').addEventListener('click', showSignedOut);
+  document.getElementById('view-loggedin').addEventListener('click', showSignedIn);
+
+  // initial: signed in (so the dashboard demo lands as before)
+  setMode('signin');
+  showSignedIn();
+})();
+</script>
+
+</body>
+</html>

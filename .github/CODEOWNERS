@@ -1,0 +1,35 @@
+# CODEOWNERS — auto-assigns reviewers based on changed paths.
+# Branch protection requires CODEOWNER approval before merge.
+# Tech Lead is the default fallback for anything not otherwise matched.
+
+# Default owner — every PR needs at least one of these reviewers.
+*                                       @sidious18
+
+# Backend (NestJS, TypeScript). Auth / SQL console / audit log live here.
+/src/backend/                           @sidious18
+/src/backend/auth/                      @sidious18
+/src/backend/sql-console/               @sidious18
+
+# Frontend (React, Tailwind, TypeScript).
+/src/frontend/                          @sidious18
+
+# AI instruction pack — Tech Lead reviews changes to commands/roles/guides.
+/ai-instructions/                       @sidious18
+/ai-instructions/commands/              @sidious18
+/ai-instructions/roles/                 @sidious18
+
+# Docs — light review; one approval still required.
+/docs/                                  @sidious18
+
+# CI workflows and GitHub configuration — DevOps + Tech Lead.
+/.github/                               @sidious18
+/.github/workflows/                     @sidious18
+
+# Hooks / commit config — Tech Lead.
+/.husky/                                @sidious18
+/commitlint.config.cjs                  @sidious18
+/.gitleaks.toml                         @sidious18
+
+# Release tooling — Tech Lead (single owner; release-please bot opens PRs).
+/release-please-config.json             @sidious18
+/.release-please-manifest.json          @sidious18

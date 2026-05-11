@@ -1,0 +1,27 @@
+# gitleaks configuration. Extends the default ruleset and adds project-specific
+# allowlists. Run on staged content via .husky/pre-commit; the GitHub Actions
+# CI lint job also runs gitleaks against the full repo on every PR.
+
+title = "ai-template-reference"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Globally ignored paths / patterns."
+paths = [
+  '''\.husky/_/''',
+  '''docs/images/.*''',
+  '''docs/confluence/.*''',
+  '''docs/requirements/fleet_mockup\.html''',  # mockup HTML contains placeholder credentials like "m.rodriguez@acme-logistics.com" and dotted-mask passwords
+  '''ai-instructions/requirements/fleet_mockup\.html''',
+  '''ai-instructions/releases/.*''',
+  '''\.venv-configure/.*''',
+]
+regexTarget = "match"
+regexes = [
+  '''placeholder''',
+  '''example\.com''',
+  '''localhost''',
+  '''127\.0\.0\.1''',
+]

@@ -1,0 +1,68 @@
+name: Feature
+description: A new user-facing capability or surface. Use when proposing something the product doesn't do yet.
+title: '[Feature] '
+labels: ['feature']
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What capability are we adding? What problem does it solve for which user role?
+      placeholder: |
+        Drag-resize widgets on the dashboard.
+
+        Today users must delete-and-recreate a widget to change its size (§8.1).
+        Usage data from the first 3 months suggests resize is needed for ~30% of layouts.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance criteria
+      description: Concrete, testable criteria.
+      placeholder: |
+        - Drag a widget edge changes its size in 1-cell increments.
+        - Dragging into an occupied cell stops at the boundary (§8.3 rule).
+        - Cursor + outline change to indicate the blocker.
+        - Resizes below the widget's minimum region size snap back.
+        - Layout persists per workspace.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: 'For features, "severity" means priority. Blocker = needed for v1; Major = needed for the next minor; Minor = nice to have; Trivial = cosmetic.'
+      options:
+        - Blocker
+        - Major
+        - Minor
+        - Trivial
+      default: 2
+    validations:
+      required: true
+
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of scope (explicit)
+      description: What this feature is NOT doing. Helps reviewers triage scope creep on the PR.
+      placeholder: |
+        - Auto-pushing neighbors out of the way (rejected per §8.3).
+        - Animated resize handles.
+
+  - type: input
+    id: linked_jira
+    attributes:
+      label: Linked Jira ticket (optional)
+      description: 'Paste the Jira key if one already exists (e.g. KAN-218); otherwise one will be created.'
+      placeholder: 'KAN-218'
+
+  - type: textarea
+    id: spec_references
+    attributes:
+      label: Spec references
+      description: Sections of docs/requirements/fleet_operations_spec.md that this feature touches.
+      placeholder: '§4.5, §8.1, §8.3'

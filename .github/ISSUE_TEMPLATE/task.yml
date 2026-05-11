@@ -1,0 +1,48 @@
+name: Task
+description: Engineering work that isn't a user-facing feature (refactor, internal tool, migration, observability, etc.).
+title: '[Task] '
+labels: ['task']
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What needs to happen and why now?
+      placeholder: |
+        Move the SQL console's per-query cost-estimate calculation from the controller into a dedicated service.
+        Today the cost-estimate logic is inlined in the controller, which makes the workspace-sandbox-mode check hard to test.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance criteria
+      description: How is "done" measured? Behavior must remain unchanged unless explicitly stated.
+      placeholder: |
+        - All cost-estimate logic lives in CostEstimateService.
+        - Unit tests cover the three thresholds in §8.4.
+        - SQL console endpoint behavior is unchanged (existing e2e tests pass).
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: Priority for this task.
+      options:
+        - Blocker
+        - Major
+        - Minor
+        - Trivial
+      default: 2
+    validations:
+      required: true
+
+  - type: input
+    id: linked_jira
+    attributes:
+      label: Linked Jira ticket (optional)
+      description: 'Paste the Jira key if one already exists (e.g. KAN-301).'
+      placeholder: 'KAN-301'

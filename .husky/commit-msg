@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+# Validate commit message against Conventional Commits + the KAN-{NUMBER} rule
+# defined in commitlint.config.cjs. Release-please's "chore: release X.Y.Z"
+# bot commits are allowed without a ticket.
+
+npx --no-install commitlint --edit "$1"
