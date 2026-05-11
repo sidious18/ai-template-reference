@@ -75,17 +75,17 @@
       "review_ticket_url": "https://maksymleb18.atlassian.net/browse/KAN-23",
       "initial_review_ticket_created": true,
       "role_onboarding_tickets": {
-        "tech-lead": null,
-        "backend-developer": null,
-        "frontend-developer": null,
-        "devops-engineer": null,
-        "ui-ux-designer": null,
-        "business-analyst": null,
-        "qa-engineer": null,
-        "data-scientist": null,
-        "security-engineer": null,
-        "db-architect": null,
-        "product-manager": null
+        "tech-lead":          { "key": "KAN-24", "url": "https://maksymleb18.atlassian.net/browse/KAN-24" },
+        "backend-developer":  { "key": "KAN-25", "url": "https://maksymleb18.atlassian.net/browse/KAN-25" },
+        "frontend-developer": { "key": "KAN-26", "url": "https://maksymleb18.atlassian.net/browse/KAN-26" },
+        "devops-engineer":    { "key": "KAN-27", "url": "https://maksymleb18.atlassian.net/browse/KAN-27" },
+        "ui-ux-designer":     { "key": "KAN-28", "url": "https://maksymleb18.atlassian.net/browse/KAN-28" },
+        "business-analyst":   { "key": "KAN-29", "url": "https://maksymleb18.atlassian.net/browse/KAN-29" },
+        "qa-engineer":        { "key": "KAN-30", "url": "https://maksymleb18.atlassian.net/browse/KAN-30" },
+        "data-scientist":     { "key": "KAN-31", "url": "https://maksymleb18.atlassian.net/browse/KAN-31" },
+        "security-engineer":  { "key": "KAN-32", "url": "https://maksymleb18.atlassian.net/browse/KAN-32" },
+        "db-architect":       { "key": "KAN-33", "url": "https://maksymleb18.atlassian.net/browse/KAN-33" },
+        "product-manager":    { "key": "KAN-34", "url": "https://maksymleb18.atlassian.net/browse/KAN-34" }
       }
     },
     "github": {
@@ -128,8 +128,8 @@
           }
         }
       },
-      "review_pr": null,
-      "initial_pr_created": false
+      "review_pr": "https://github.com/sidious18/ai-template-reference/pull/1",
+      "initial_pr_created": true
     },
     "confluence": {
       "enabled": true,
