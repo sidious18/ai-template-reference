@@ -1,0 +1,46 @@
+name: Chore
+description: Maintenance work — dependency bumps, doc fixes, tooling tweaks, CI updates. No user-visible change expected.
+title: '[Chore] '
+labels: ['chore']
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What maintenance is being done?
+      placeholder: |
+        Bump @commitlint/cli from 19.5.0 to 19.6.0 to pick up the new JIRA-prefix matcher.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance criteria
+      description: How is "done" measured? For chores, this is usually "CI still passes and the change is in place."
+      placeholder: |
+        - commitlint version is 19.6.0 in package.json and package-lock.json.
+        - CI lint + typecheck + test passes.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: Priority. Most chores are Minor or Trivial; security-driven bumps are Major or Blocker.
+      options:
+        - Blocker
+        - Major
+        - Minor
+        - Trivial
+      default: 2
+    validations:
+      required: true
+
+  - type: input
+    id: linked_jira
+    attributes:
+      label: Linked Jira ticket (optional)
+      description: 'Paste the Jira key if one already exists.'
+      placeholder: 'KAN-XXX'

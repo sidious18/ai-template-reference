@@ -1,0 +1,121 @@
+name: deploy-production
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+  deployments: write
+
+env:
+  AWS_REGION: us-west-2
+  ECR_REPO_BACKEND: ai-template-reference-backend
+  S3_BUCKET_FRONTEND: ai-template-reference-production-frontend
+  CLOUDFRONT_DISTRIBUTION_ID_VAR: CLOUDFRONT_DISTRIBUTION_ID_PRODUCTION
+
+jobs:
+  deploy:
+    name: deploy to production
+    runs-on: ubuntu-latest
+    # Production environment carries a manual approval gate (configured in
+    # GitHub repo Settings → Environments → production → required reviewers).
+    # Reviewers default to CODEOWNERS / Tech Lead.
+    environment:
+      name: production
+      url: https://app.fleet-operations.example.com
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build workspaces
+        run: npm run build --workspaces --if-present
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN_PRODUCTION }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Resolve release tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            echo "tag=${{ github.event.release.tag_name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build + push backend image
+        if: hashFiles('src/backend/Dockerfile') != ''
+        env:
+          IMAGE_TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          IMAGE_URI="${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPO_BACKEND }}:${IMAGE_TAG}"
+          docker build -t "${IMAGE_URI}" src/backend
+          docker push "${IMAGE_URI}"
+
+      - name: Trigger CodeDeploy to EC2 ASG (backend)
+        if: hashFiles('src/backend/appspec.yml') != ''
+        env:
+          IMAGE_TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          aws deploy create-deployment \
+            --application-name ai-template-reference-production \
+            --deployment-group-name backend-asg \
+            --deployment-config-name CodeDeployDefault.AllAtOnce \
+            --revision "{
+              \"revisionType\": \"S3\",
+              \"s3Location\": {
+                \"bucket\": \"${{ secrets.CODEDEPLOY_BUCKET_PRODUCTION }}\",
+                \"key\": \"backend/${IMAGE_TAG}.zip\",
+                \"bundleType\": \"zip\"
+              }
+            }" \
+            --description "production deploy ${IMAGE_TAG}"
+
+      - name: Sync frontend to S3
+        if: hashFiles('src/frontend/dist/**') != ''
+        run: |
+          aws s3 sync src/frontend/dist/ s3://${{ env.S3_BUCKET_FRONTEND }} \
+            --delete \
+            --cache-control 'public,max-age=300,must-revalidate'
+
+      - name: Invalidate CloudFront cache
+        if: hashFiles('src/frontend/dist/**') != ''
+        env:
+          DIST_ID: ${{ secrets[env.CLOUDFRONT_DISTRIBUTION_ID_VAR] }}
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${DIST_ID}" \
+            --paths '/*'
+
+      - name: Wait for health endpoint
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS https://app.fleet-operations.example.com/api/healthz; then
+              echo "healthz ok"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "healthz never returned 200 — rollback required"
+          exit 1

@@ -1,0 +1,47 @@
+# actions/labeler@v5 path-glob → label mapping.
+# Each module declared in ai-instructions/configure.json.layout.modules[] gets
+# its own label; docs/ and .github/ get universal labels.
+
+backend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/backend/**
+
+frontend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/frontend/**
+
+docs:
+  - changed-files:
+      - any-glob-to-any-file:
+          - docs/**
+          - '*.md'
+          - '**/*.md'
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/**
+
+hooks:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .husky/**
+          - commitlint.config.cjs
+          - .gitleaks.toml
+          - .prettierrc.json
+          - .prettierignore
+          - .editorconfig
+
+ai-pack:
+  - changed-files:
+      - any-glob-to-any-file:
+          - ai-instructions/**
+
+release:
+  - changed-files:
+      - any-glob-to-any-file:
+          - release-please-config.json
+          - .release-please-manifest.json
+          - CHANGELOG.md

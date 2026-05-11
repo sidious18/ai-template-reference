@@ -1,0 +1,42 @@
+{
+  "name": "ai-template-reference",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Fleet operations — web app for fleet managers, operations directors, data analysts, and HR/safety officers.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.11.0"
+  },
+  "packageManager": "npm@10.5.0",
+  "workspaces": [
+    "src/backend",
+    "src/frontend"
+  ],
+  "scripts": {
+    "prepare": "husky",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.5.0",
+    "@commitlint/config-conventional": "^19.5.0",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.3.3"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,json,md,yml,yaml,css,scss,html}": [
+      "prettier --write"
+    ],
+    "src/backend/**/*.{ts,tsx}": [
+      "npm run lint --workspace src/backend -- --fix"
+    ],
+    "src/frontend/**/*.{ts,tsx}": [
+      "npm run lint --workspace src/frontend -- --fix"
+    ]
+  }
+}

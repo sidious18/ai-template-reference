@@ -1,0 +1,22 @@
+#!/usr/bin/env sh
+# Final gate before pushing. Mirrors the CI lint + typecheck jobs locally so
+# pushes don't fail in CI after the fact.
+#
+# Until /new-release scaffolds src/backend/ and src/frontend/, the workspaces
+# don't exist yet and the hook is a no-op. Once either module lands, the
+# hook activates automatically.
+
+set -e
+
+if [ ! -d src/backend ] && [ ! -d src/frontend ]; then
+  echo "[pre-push] no workspace modules present yet — skipping lint + typecheck (will activate after /new-release)"
+  exit 0
+fi
+
+echo "[pre-push] lint…"
+npm run lint --silent
+
+echo "[pre-push] typecheck…"
+npm run typecheck --silent
+
+echo "[pre-push] ok"

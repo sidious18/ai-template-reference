@@ -1,0 +1,49 @@
+# Default: normalize line endings on commit, check out native
+* text=auto eol=lf
+
+# Force LF on text formats regardless of OS
+*.ts        text eol=lf
+*.tsx       text eol=lf
+*.js        text eol=lf
+*.jsx       text eol=lf
+*.json      text eol=lf
+*.md        text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.html      text eol=lf
+*.css       text eol=lf
+*.scss      text eol=lf
+*.sh        text eol=lf
+*.sql       text eol=lf
+Dockerfile  text eol=lf
+.env*       text eol=lf
+
+# Treat as binary
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.webp binary
+*.bmp  binary
+*.tiff binary
+*.pdf  binary
+*.zip  binary
+*.tar  binary
+*.tar.gz binary
+*.tgz  binary
+*.woff binary
+*.woff2 binary
+*.ttf  binary
+*.otf  binary
+*.eot  binary
+
+# Mark generated files in diff stats
+package-lock.json     linguist-generated=true
+pnpm-lock.yaml        linguist-generated=true
+yarn.lock             linguist-generated=true
+release-please-config.json linguist-generated=true
+.release-please-manifest.json linguist-generated=true
+
+# Exclude /docs/images from language stats (auto-rendered screenshots)
+docs/images/**        linguist-vendored=true
+docs/requirements/**  linguist-documentation=true

@@ -1,0 +1,56 @@
+name: ai-pr-review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AI_REVIEW_AWS_ROLE_ARN }}
+          aws-region: us-west-2
+
+      - name: Run Claude PR review
+        uses: anthropics/claude-code-action@v1
+        with:
+          use_bedrock: 'true'
+          use_sticky_comment: 'true'
+          claude_args: |
+            --model us.anthropic.claude-sonnet-4-6-20251001-v1:0
+          prompt: |
+            You are reviewing this pull request for ai-template-reference (fleet operations — a web app for fleet managers, operations directors, data analysts, and HR/safety officers).
+
+            Produce ONE comment with these sections:
+
+            1. **Summary** — 2–3 sentences on what this change does.
+            2. **Findings** — concrete issues only. Cite file:line. Group by:
+               - Correctness / bugs
+               - Security (workspace isolation, auth, audit log, PII handling, rate limits / cost ceilings)
+               - Performance
+               - Maintainability / readability
+               Skip stylistic nitpicks already enforced by Prettier / ESLint.
+            3. **Suggestions** — actionable changes the author can make. Quote the diff snippet you'd change.
+            4. **Verdict** — one of: approve · request-changes · comment-only.
+
+            Project conventions live in `docs/conventions/` and the per-role specs in `docs/roles/`. Honor them when those files are present. The configure PR (the workflow's first run) is reviewing template-generated artifacts, so those files may not exist yet; in that case, focus on whether the artifacts look internally consistent.
+
+            Pay particular attention to the spec invariants:
+            - Workspace isolation on every query and queue job (§6.5).
+            - SQL console sandbox-by-default (§8.4) — production promotion requires admin role.
+            - Argon2id / bcrypt cost ≥ 12 for any auth path (§3.6).
+            - Audit log entry on every admin action (§6.5).
+            - WCAG 2.1 AA on UI changes (§6.2).
+            - UTC storage + workspace-timezone rendering (§6.4).

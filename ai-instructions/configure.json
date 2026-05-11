@@ -1,0 +1,579 @@
+{
+  "version": "1",
+  "scope": "full",
+  "discovery_mode": "manual",
+  "approval_rate": "auto",
+  "skipped": [],
+  "prereqs": {
+    "git": { "status": "ok" },
+    "github_mcp": { "status": "ok" },
+    "atlassian_mcp": { "status": "ok" },
+    "ide_mcp": { "status": "ok" },
+    "editor_cli": { "status": "ok", "detected": "vscode" }
+  },
+  "skipped_prereqs": [],
+  "project": {
+    "name": "ai-template-reference",
+    "kind": "web-app",
+    "description": "A web application for fleet managers to monitor vehicles, drivers, and trip data through a customizable tile-based dashboard and a suite of data-research tools.",
+    "users": "Fleet manager, Operations director, Data analyst, HR/safety officer"
+  },
+  "layout": {
+    "kind": "web-app",
+    "modules": [
+      {
+        "name": "backend",
+        "path": "src/backend",
+        "kind": "server",
+        "language": "typescript",
+        "manifest": "src/backend/package.json",
+        "tests": "src/backend/tests",
+        "independent": true
+      },
+      {
+        "name": "frontend",
+        "path": "src/frontend",
+        "kind": "client",
+        "language": "typescript",
+        "manifest": "src/frontend/package.json",
+        "tests": "src/frontend/tests",
+        "independent": true
+      }
+    ],
+    "exceptions": []
+  },
+  "stack": {
+    "backend": { "language": "typescript", "framework": "nestjs", "strict_types": true },
+    "frontend": { "framework": "react", "styling": "tailwind", "strict_types": true },
+    "database": ["postgresql"],
+    "cache": ["redis"],
+    "queue": ["bullmq"],
+    "testing": ["vitest", "playwright"]
+  },
+  "conventions": {
+    "typescript": { "formatter": "prettier", "linter": "eslint" }
+  },
+  "gitflow": {
+    "model": "trunk-based",
+    "branch_pattern": "feature/{TICKET}-{slug}",
+    "merge_strategy": "squash",
+    "protected_branches": ["main"],
+    "commit_signing": "none",
+    "commit_convention": "conventional-commits"
+  },
+  "integrations": {
+    "jira": {
+      "enabled": true,
+      "cloud_id": "f7d6cd49-1769-49d0-bde0-5ad06f9d0348",
+      "site_url": "https://maksymleb18.atlassian.net",
+      "project_key": "KAN",
+      "enforce_ticket_id": true,
+      "tech_lead": "5efde4a524882a0bb5fedd12",
+      "tech_lead_display": "Maksym Lebedev",
+      "tech_lead_email": "maksym.leb18@gmail.com",
+      "review_ticket": "KAN-23",
+      "review_ticket_url": "https://maksymleb18.atlassian.net/browse/KAN-23",
+      "initial_review_ticket_created": true,
+      "role_onboarding_tickets": {
+        "tech-lead": null,
+        "backend-developer": null,
+        "frontend-developer": null,
+        "devops-engineer": null,
+        "ui-ux-designer": null,
+        "business-analyst": null,
+        "qa-engineer": null,
+        "data-scientist": null,
+        "security-engineer": null,
+        "db-architect": null,
+        "product-manager": null
+      }
+    },
+    "github": {
+      "enabled": true,
+      "owner": "sidious18",
+      "repo": "ai-template-reference",
+      "tech_lead": "sidious18",
+      "branch_protection": {
+        "apply": true,
+        "pending": true,
+        "pending_reason": "GitHub MCP does not expose branch-protection updates; the spec forbids raw gh-api / REST from /configure. Manual setup via the GitHub web UI or `gh api` is required after merge — see the PR body for the exact command.",
+        "required_checks": ["lint", "typecheck", "test", "build", "pr-title-check"],
+        "linear_history": true,
+        "required_reviews": 1,
+        "dismiss_stale_reviews": true,
+        "require_code_owner_reviews": true,
+        "required_conversation_resolution": true
+      },
+      "rules": {
+        "issues": {
+          "format": "forms",
+          "types": ["bug", "feature", "task", "chore"],
+          "required_fields": ["title", "description", "acceptance_criteria", "severity"],
+          "auto_label_by_type": true,
+          "require_linked_jira": false
+        },
+        "prs": {
+          "require_jira_in_title": true,
+          "template_sections": ["Summary", "Changes", "Test Plan", "Linked Ticket"],
+          "auto_assign_codeowners": true,
+          "auto_label_by_path": true,
+          "allow_draft": true,
+          "require_conversations_resolved": true,
+          "block_merge_on_bad_title": true,
+          "ai_review": {
+            "enabled": true,
+            "provider": "bedrock",
+            "model": "us.anthropic.claude-sonnet-4-6-20251001-v1:0",
+            "region": "us-west-2"
+          }
+        }
+      },
+      "review_pr": null,
+      "initial_pr_created": false
+    },
+    "confluence": {
+      "enabled": true,
+      "local_fallback": false,
+      "local_path": "docs/confluence/",
+      "space_key": "SD",
+      "parent_page_id": null,
+      "pages_to_create": [
+        "project-overview",
+        "requirements",
+        "technologies",
+        "user-roles",
+        "gitflow",
+        "onboarding"
+      ],
+      "sync_on_edit": true,
+      "created_pages": {
+        "project-overview": {
+          "id": "3440644",
+          "url": "https://maksymleb18.atlassian.net/wiki/spaces/SD/pages/3440644/Project+Overview+fleet+operations",
+          "tinyurl": "https://maksymleb18.atlassian.net/wiki/x/BIA0"
+        },
+        "requirements": {
+          "id": "3309572",
+          "url": "https://maksymleb18.atlassian.net/wiki/spaces/SD/pages/3309572/Requirements+fleet+operations",
+          "tinyurl": "https://maksymleb18.atlassian.net/wiki/x/BIAy"
+        },
+        "technologies": {
+          "id": "3473409",
+          "url": "https://maksymleb18.atlassian.net/wiki/spaces/SD/pages/3473409/Technologies+fleet+operations",
+          "tinyurl": "https://maksymleb18.atlassian.net/wiki/x/AQA1"
+        },
+        "user-roles": {
+          "id": "3440677",
+          "url": "https://maksymleb18.atlassian.net/wiki/spaces/SD/pages/3440677/User+Roles+fleet+operations",
+          "tinyurl": "https://maksymleb18.atlassian.net/wiki/x/JYA0"
+        },
+        "gitflow": {
+          "id": "3375109",
+          "url": "https://maksymleb18.atlassian.net/wiki/spaces/SD/pages/3375109/Gitflow+fleet+operations",
+          "tinyurl": "https://maksymleb18.atlassian.net/wiki/x/BYAz"
+        },
+        "onboarding": {
+          "id": "3440721",
+          "url": "https://maksymleb18.atlassian.net/wiki/spaces/SD/pages/3440721/Onboarding+fleet+operations",
+          "tinyurl": "https://maksymleb18.atlassian.net/wiki/x/UYA0"
+        }
+      },
+      "copied_images": []
+    },
+    "ide_mcp": {
+      "enabled": true
+    },
+    "deployment": {
+      "target": "aws",
+      "managed_services": {
+        "compute": "ec2-asg",
+        "data": ["aurora-postgres", "s3"],
+        "cache": ["elasticache-redis"],
+        "messaging": ["bullmq-on-elasticache"],
+        "edge": ["cloudfront"],
+        "secrets": "secrets-manager"
+      },
+      "automation": true,
+      "ci_pipeline": "github-actions",
+      "environments": ["staging", "production"],
+      "registry": "ecr",
+      "workflows": {
+        "staging": ".github/workflows/deploy-staging.yml",
+        "production": ".github/workflows/deploy-production.yml"
+      }
+    }
+  },
+  "hooks": {
+    "framework": "husky-lint-staged",
+    "secret_scanning": "gitleaks",
+    "pre_push_checks": ["lint", "typecheck"]
+  },
+  "docs_media": [
+    {
+      "source": "ai-instructions/requirements/fleet_operations_spec.md",
+      "destination": "docs/requirements/fleet_operations_spec.md",
+      "type": "markdown",
+      "role": "requirement-narrative",
+      "label": "Fleet operations — product specification",
+      "rewritten_refs": [],
+      "referenced_by": []
+    },
+    {
+      "source": "ai-instructions/requirements/README.md",
+      "destination": "docs/requirements/README.md",
+      "type": "markdown",
+      "role": "requirement-narrative",
+      "label": "Fleet operations — mockup bundle README",
+      "rewritten_refs": [],
+      "referenced_by": []
+    },
+    {
+      "source": "ai-instructions/requirements/fleet_mockup.html",
+      "destination": "docs/requirements/fleet_mockup.html",
+      "type": "html",
+      "role": "html-prototype",
+      "label": "Fleet operations — interactive mockup",
+      "rewritten_refs": [],
+      "rendered_screens": [
+        "docs/images/ui/screens/01-sign-in.png",
+        "docs/images/ui/screens/02-create-account.png",
+        "docs/images/ui/screens/03-sso.png",
+        "docs/images/ui/screens/04-dashboard-empty.png",
+        "docs/images/ui/screens/05-dashboard-selecting.png",
+        "docs/images/ui/screens/06-dashboard-configured.png",
+        "docs/images/ui/screens/07-query-builder.png",
+        "docs/images/ui/screens/08-pivot-table.png",
+        "docs/images/ui/screens/09-cohorts.png",
+        "docs/images/ui/screens/10-sql-console.png",
+        "docs/images/ui/screens/11-trend-forecast.png",
+        "docs/images/ui/screens/12-anomaly-detection.png",
+        "docs/images/ui/screens/13-driver-scoring.png",
+        "docs/images/ui/screens/14-correlation-matrix.png",
+        "docs/images/ui/screens/15-report-builder.png",
+        "docs/images/ui/screens/16-scheduled-exports.png",
+        "docs/images/ui/screens/17-saved-views.png"
+      ],
+      "referenced_by": []
+    },
+    {
+      "source": "ai-instructions/requirements/fleet_mockup.html#sign-in",
+      "destination": "docs/images/ui/screens/01-sign-in.png",
+      "type": "image-raster",
+      "role": "screenshot",
+      "label": "Sign in",
+      "linked_requirements": ["§3.3", "§3.6"],
+      "derived_from": "docs/requirements/fleet_mockup.html",
+      "referenced_by": []
+    },
+    {
+      "source": "ai-instructions/requirements/fleet_mockup.html#create-account",
+      "destination": "docs/images/ui/screens/02-create-account.png",
+      "type": "image-raster",
+      "role": "screenshot",
+      "label": "Create account",
+      "linked_requirements": ["§3.4", "§3.6"],
+      "derived_from": "docs/requirements/fleet_mockup.html",
+      "referenced_by": []
+    },
+    {
+      "source": "ai-instructions/requirements/fleet_mockup.html#sso",
+      "destination": "docs/images/ui/screens/03-sso.png",
+      "type": "image-raster",
+      "role": "screenshot",
+      "label": "Single sign-on",
+      "linked_requirements": ["§3.5", "§3.6"],
+      "derived_from": "docs/requirements/fleet_mockup.html",
+      "referenced_by": []
+    },
+    {
+      "source": "ai-instructions/requirements/fleet_mockup.html#dashboard-empty",
+      "destination": "docs/images/ui/screens/04-dashboard-empty.png",
+      "type": "image-raster",
+      "role": "screenshot",
+      "label": "Dashboard — Empty",
+      "linked_requirements": ["§4.2.1", "§4.6"],
+      "derived_from": "docs/requirements/fleet_mockup.html",
+      "referenced_by": []
+    },
+    {
+      "source": "ai-instructions/requirements/fleet_mockup.html#dashboard-selecting",
+      "destination": "docs/images/ui/screens/05-dashboard-selecting.png",
+      "type": "image-raster",
+      "role": "screenshot",
+      "label": "Dashboard — Selecting",
+      "linked_requirements": ["§4.2.2", "§4.3", "§4.4", "§4.6", "§8.2"],
+      "derived_from": "docs/requirements/fleet_mockup.html",
+      "referenced_by": []
+    },
+    {
+      "source": "ai-instructions/requirements/fleet_mockup.html#dashboard-configured",
+      "destination": "docs/images/ui/screens/06-dashboard-configured.png",
+      "type": "image-raster",
+      "role": "screenshot",
+      "label": "Dashboard — Configured",
+      "linked_requirements": ["§4.2.3", "§4.4", "§4.5", "§4.6", "§8.1"],
+      "derived_from": "docs/requirements/fleet_mockup.html",
+      "referenced_by": []
+    },
+    {
+      "source": "ai-instructions/requirements/fleet_mockup.html#query-builder",
+      "destination": "docs/images/ui/screens/07-query-builder.png",
+      "type": "image-raster",
+      "role": "screenshot",
+      "label": "Query builder",
+      "linked_requirements": ["§5.1.1"],
+      "derived_from": "docs/requirements/fleet_mockup.html",
+      "referenced_by": []
+    },
+    {
+      "source": "ai-instructions/requirements/fleet_mockup.html#pivot-table",
+      "destination": "docs/images/ui/screens/08-pivot-table.png",
+      "type": "image-raster",
+      "role": "screenshot",
+      "label": "Pivot table",
+      "linked_requirements": ["§5.1.2"],
+      "derived_from": "docs/requirements/fleet_mockup.html",
+      "referenced_by": []
+    },
+    {
+      "source": "ai-instructions/requirements/fleet_mockup.html#cohorts",
+      "destination": "docs/images/ui/screens/09-cohorts.png",
+      "type": "image-raster",
+      "role": "screenshot",
+      "label": "Cohorts",
+      "linked_requirements": ["§5.1.3"],
+      "derived_from": "docs/requirements/fleet_mockup.html",
+      "referenced_by": []
+    },
+    {
+      "source": "ai-instructions/requirements/fleet_mockup.html#sql-console",
+      "destination": "docs/images/ui/screens/10-sql-console.png",
+      "type": "image-raster",
+      "role": "screenshot",
+      "label": "SQL console",
+      "linked_requirements": ["§5.1.4", "§8.4", "§6.5"],
+      "derived_from": "docs/requirements/fleet_mockup.html",
+      "referenced_by": []
+    },
+    {
+      "source": "ai-instructions/requirements/fleet_mockup.html#trend-forecast",
+      "destination": "docs/images/ui/screens/11-trend-forecast.png",
+      "type": "image-raster",
+      "role": "screenshot",
+      "label": "Trend & forecast",
+      "linked_requirements": ["§5.2.1", "§8.5"],
+      "derived_from": "docs/requirements/fleet_mockup.html",
+      "referenced_by": []
+    },
+    {
+      "source": "ai-instructions/requirements/fleet_mockup.html#anomaly-detection",
+      "destination": "docs/images/ui/screens/12-anomaly-detection.png",
+      "type": "image-raster",
+      "role": "screenshot",
+      "label": "Anomaly detection",
+      "linked_requirements": ["§5.2.2"],
+      "derived_from": "docs/requirements/fleet_mockup.html",
+      "referenced_by": []
+    },
+    {
+      "source": "ai-instructions/requirements/fleet_mockup.html#driver-scoring",
+      "destination": "docs/images/ui/screens/13-driver-scoring.png",
+      "type": "image-raster",
+      "role": "screenshot",
+      "label": "Driver scoring",
+      "linked_requirements": ["§5.2.3"],
+      "derived_from": "docs/requirements/fleet_mockup.html",
+      "referenced_by": []
+    },
+    {
+      "source": "ai-instructions/requirements/fleet_mockup.html#correlation-matrix",
+      "destination": "docs/images/ui/screens/14-correlation-matrix.png",
+      "type": "image-raster",
+      "role": "screenshot",
+      "label": "Correlation matrix",
+      "linked_requirements": ["§5.2.4"],
+      "derived_from": "docs/requirements/fleet_mockup.html",
+      "referenced_by": []
+    },
+    {
+      "source": "ai-instructions/requirements/fleet_mockup.html#report-builder",
+      "destination": "docs/images/ui/screens/15-report-builder.png",
+      "type": "image-raster",
+      "role": "screenshot",
+      "label": "Report builder",
+      "linked_requirements": ["§5.3.1"],
+      "derived_from": "docs/requirements/fleet_mockup.html",
+      "referenced_by": []
+    },
+    {
+      "source": "ai-instructions/requirements/fleet_mockup.html#scheduled-exports",
+      "destination": "docs/images/ui/screens/16-scheduled-exports.png",
+      "type": "image-raster",
+      "role": "screenshot",
+      "label": "Scheduled exports",
+      "linked_requirements": ["§5.3.2"],
+      "derived_from": "docs/requirements/fleet_mockup.html",
+      "referenced_by": []
+    },
+    {
+      "source": "ai-instructions/requirements/fleet_mockup.html#saved-views",
+      "destination": "docs/images/ui/screens/17-saved-views.png",
+      "type": "image-raster",
+      "role": "screenshot",
+      "label": "Saved views",
+      "linked_requirements": ["§5.3.3", "§8.6"],
+      "derived_from": "docs/requirements/fleet_mockup.html",
+      "referenced_by": []
+    }
+  ],
+  "docs_imagery": {
+    "ui": [
+      {
+        "source": "ai-instructions/requirements/fleet_mockup.html#sign-in",
+        "destination": "docs/images/ui/screens/01-sign-in.png",
+        "referenced_by": []
+      },
+      {
+        "source": "ai-instructions/requirements/fleet_mockup.html#create-account",
+        "destination": "docs/images/ui/screens/02-create-account.png",
+        "referenced_by": []
+      },
+      {
+        "source": "ai-instructions/requirements/fleet_mockup.html#sso",
+        "destination": "docs/images/ui/screens/03-sso.png",
+        "referenced_by": []
+      },
+      {
+        "source": "ai-instructions/requirements/fleet_mockup.html#dashboard-empty",
+        "destination": "docs/images/ui/screens/04-dashboard-empty.png",
+        "referenced_by": []
+      },
+      {
+        "source": "ai-instructions/requirements/fleet_mockup.html#dashboard-selecting",
+        "destination": "docs/images/ui/screens/05-dashboard-selecting.png",
+        "referenced_by": []
+      },
+      {
+        "source": "ai-instructions/requirements/fleet_mockup.html#dashboard-configured",
+        "destination": "docs/images/ui/screens/06-dashboard-configured.png",
+        "referenced_by": []
+      },
+      {
+        "source": "ai-instructions/requirements/fleet_mockup.html#query-builder",
+        "destination": "docs/images/ui/screens/07-query-builder.png",
+        "referenced_by": []
+      },
+      {
+        "source": "ai-instructions/requirements/fleet_mockup.html#pivot-table",
+        "destination": "docs/images/ui/screens/08-pivot-table.png",
+        "referenced_by": []
+      },
+      {
+        "source": "ai-instructions/requirements/fleet_mockup.html#cohorts",
+        "destination": "docs/images/ui/screens/09-cohorts.png",
+        "referenced_by": []
+      },
+      {
+        "source": "ai-instructions/requirements/fleet_mockup.html#sql-console",
+        "destination": "docs/images/ui/screens/10-sql-console.png",
+        "referenced_by": []
+      },
+      {
+        "source": "ai-instructions/requirements/fleet_mockup.html#trend-forecast",
+        "destination": "docs/images/ui/screens/11-trend-forecast.png",
+        "referenced_by": []
+      },
+      {
+        "source": "ai-instructions/requirements/fleet_mockup.html#anomaly-detection",
+        "destination": "docs/images/ui/screens/12-anomaly-detection.png",
+        "referenced_by": []
+      },
+      {
+        "source": "ai-instructions/requirements/fleet_mockup.html#driver-scoring",
+        "destination": "docs/images/ui/screens/13-driver-scoring.png",
+        "referenced_by": []
+      },
+      {
+        "source": "ai-instructions/requirements/fleet_mockup.html#correlation-matrix",
+        "destination": "docs/images/ui/screens/14-correlation-matrix.png",
+        "referenced_by": []
+      },
+      {
+        "source": "ai-instructions/requirements/fleet_mockup.html#report-builder",
+        "destination": "docs/images/ui/screens/15-report-builder.png",
+        "referenced_by": []
+      },
+      {
+        "source": "ai-instructions/requirements/fleet_mockup.html#scheduled-exports",
+        "destination": "docs/images/ui/screens/16-scheduled-exports.png",
+        "referenced_by": []
+      },
+      {
+        "source": "ai-instructions/requirements/fleet_mockup.html#saved-views",
+        "destination": "docs/images/ui/screens/17-saved-views.png",
+        "referenced_by": []
+      }
+    ],
+    "architecture": []
+  },
+  "docs_requirements": [
+    {
+      "source": "ai-instructions/requirements/fleet_operations_spec.md",
+      "destination": "docs/requirements/fleet_operations_spec.md",
+      "rewritten_refs": [],
+      "referenced_by": []
+    },
+    {
+      "source": "ai-instructions/requirements/README.md",
+      "destination": "docs/requirements/README.md",
+      "rewritten_refs": [],
+      "referenced_by": []
+    },
+    {
+      "source": "ai-instructions/requirements/fleet_mockup.html",
+      "destination": "docs/requirements/fleet_mockup.html",
+      "rewritten_refs": [],
+      "referenced_by": []
+    }
+  ],
+  "ci": {
+    "provider": "github-actions",
+    "jobs": ["lint", "typecheck", "test", "build"]
+  },
+  "dependencies": { "automation": "dependabot" },
+  "releases": {
+    "automation": "release-please",
+    "workflow": ".github/workflows/release-please.yml"
+  },
+  "license": "MIT",
+  "docs": [
+    "onboarding",
+    "gitflow",
+    "code-review",
+    "security",
+    "contributing",
+    "role-docs",
+    "conventions"
+  ],
+  "team_roles": [
+    { "name": "tech-lead", "display": "Tech Lead", "onboarding_doc": true },
+    { "name": "backend-developer", "display": "Backend Developer", "onboarding_doc": true },
+    { "name": "frontend-developer", "display": "Frontend Developer", "onboarding_doc": true },
+    { "name": "devops-engineer", "display": "DevOps Engineer", "onboarding_doc": true },
+    { "name": "ui-ux-designer", "display": "UI/UX Designer", "onboarding_doc": true },
+    { "name": "business-analyst", "display": "Business Analyst", "onboarding_doc": true },
+    { "name": "qa-engineer", "display": "QA Engineer", "onboarding_doc": true },
+    { "name": "data-scientist", "display": "Data Scientist", "onboarding_doc": true },
+    { "name": "security-engineer", "display": "Security Engineer", "onboarding_doc": true },
+    { "name": "db-architect", "display": "DB Architect", "onboarding_doc": true },
+    { "name": "product-manager", "display": "Product Manager", "onboarding_doc": true }
+  ],
+  "onboarding": {
+    "support_channels": {
+      "primary": "github-issues",
+      "url": "https://github.com/sidious18/ai-template-reference/issues",
+      "discussions_url": "https://github.com/sidious18/ai-template-reference/discussions",
+      "tag": "question"
+    }
+  }
+}

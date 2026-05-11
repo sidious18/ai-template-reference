@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security report (PRIVATE)
+    url: https://github.com/sidious18/ai-template-reference/security/advisories/new
+    about: For security vulnerabilities, use the private advisory flow. Do NOT file a public issue.
+  - name: Question (Discussions)
+    url: https://github.com/sidious18/ai-template-reference/discussions
+    about: General questions, design discussions, "is this how it's supposed to work?" — start a Discussion.

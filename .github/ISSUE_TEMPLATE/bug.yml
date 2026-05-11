@@ -1,0 +1,68 @@
+name: Bug
+description: Something behaves incorrectly. Use this when an existing feature does not work as intended.
+title: '[Bug] '
+labels: ['bug']
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What's broken? Be specific about the surface (auth, dashboard, a specific research tool, a CI workflow).
+      placeholder: "When I click 'Stay signed in' and refresh, my session expires after 8 hours instead of 30 days."
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance criteria
+      description: How will we know this bug is fixed? Use one bullet per check.
+      placeholder: |
+        - With "Stay signed in" checked, the session token TTL is 30 days.
+        - With it unchecked, the TTL is 8 hours.
+        - A regression test in src/backend/tests/auth/ covers both cases.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: Choose one. (Blocker = product is unusable for some users. Major = visible defect with a workaround. Minor = polish. Trivial = typo / cosmetic.)
+      options:
+        - Blocker
+        - Major
+        - Minor
+        - Trivial
+      default: 2
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Minimum steps from a fresh state.
+      placeholder: |
+        1. Sign in with "Stay signed in" checked.
+        2. Wait > 8 hours (or set system clock forward).
+        3. Reload the dashboard.
+    validations:
+      required: true
+
+  - type: input
+    id: linked_jira
+    attributes:
+      label: Linked Jira ticket (optional)
+      description: 'If a Jira ticket already exists, paste it (e.g. KAN-123). If not, one will be created.'
+      placeholder: 'KAN-123'
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser / OS / commit SHA / workspace ID if relevant.
+      placeholder: |
+        - Browser: Chrome 124 on macOS 14.4
+        - Commit: a1b2c3d
+        - Workspace: dev-acme

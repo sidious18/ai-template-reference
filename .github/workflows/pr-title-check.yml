@@ -1,0 +1,26 @@
+name: pr-title-check
+
+on:
+  pull_request:
+    types: [opened, edited, reopened]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  check:
+    name: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR title (Conventional Commits + KAN-{NUMBER} OR release-please)
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PATTERN: '^(?:(feat|fix|chore|docs|refactor|test|perf)(\(.+\))?: KAN-\d+ .+|chore: release \d+\.\d+\.\d+)$'
+        run: |
+          printf '%s' "$PR_TITLE" | grep -qE "$PATTERN" || {
+            echo "PR title does not match the required pattern."
+            echo "Required: '<type>(<scope>): KAN-{NUMBER} <summary>'"
+            echo "Allowed exception: 'chore: release X.Y.Z' (release-please bot)"
+            echo "Got: $PR_TITLE"
+            exit 1
+          }

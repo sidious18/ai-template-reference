@@ -1,0 +1,113 @@
+name: deploy-staging
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+  deployments: write
+
+env:
+  AWS_REGION: us-west-2
+  ECR_REPO_BACKEND: ai-template-reference-backend
+  S3_BUCKET_FRONTEND: ai-template-reference-staging-frontend
+  CLOUDFRONT_DISTRIBUTION_ID_VAR: CLOUDFRONT_DISTRIBUTION_ID_STAGING
+
+jobs:
+  deploy:
+    name: deploy to staging
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://staging.fleet-operations.example.com
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build workspaces
+        run: npm run build --workspaces --if-present
+
+      # ── AWS auth via OIDC; no long-lived AWS keys live in repo secrets ──
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN_STAGING }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # ── Backend → ECR → EC2 ASG via CodeDeploy ──
+      - name: Login to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build + push backend image
+        if: hashFiles('src/backend/Dockerfile') != ''
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          IMAGE_URI="${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPO_BACKEND }}:${IMAGE_TAG}"
+          docker build -t "${IMAGE_URI}" src/backend
+          docker push "${IMAGE_URI}"
+          echo "image_uri=${IMAGE_URI}" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger CodeDeploy to EC2 ASG (backend)
+        if: hashFiles('src/backend/appspec.yml') != ''
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          aws deploy create-deployment \
+            --application-name ai-template-reference-staging \
+            --deployment-group-name backend-asg \
+            --revision "{
+              \"revisionType\": \"S3\",
+              \"s3Location\": {
+                \"bucket\": \"${{ secrets.CODEDEPLOY_BUCKET_STAGING }}\",
+                \"key\": \"backend/${IMAGE_TAG}.zip\",
+                \"bundleType\": \"zip\"
+              }
+            }" \
+            --description "staging deploy ${IMAGE_TAG}"
+
+      # ── Frontend → S3 → CloudFront ──
+      - name: Sync frontend to S3
+        if: hashFiles('src/frontend/dist/**') != ''
+        run: |
+          aws s3 sync src/frontend/dist/ s3://${{ env.S3_BUCKET_FRONTEND }} \
+            --delete \
+            --cache-control 'public,max-age=300,must-revalidate'
+
+      - name: Invalidate CloudFront cache
+        if: hashFiles('src/frontend/dist/**') != ''
+        env:
+          DIST_ID: ${{ secrets[env.CLOUDFRONT_DISTRIBUTION_ID_VAR] }}
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${DIST_ID}" \
+            --paths '/*'
+
+      # ── Smoke test ──
+      - name: Wait for health endpoint
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS https://staging.fleet-operations.example.com/api/healthz; then
+              echo "healthz ok"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "healthz never returned 200"
+          exit 1

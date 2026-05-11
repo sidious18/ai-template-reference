@@ -1,1 +1,60 @@
+# Node / TypeScript
+node_modules/
+dist/
+build/
+out/
+.next/
+.nest/
+*.tsbuildinfo
+
+# Test + coverage
+coverage/
+.nyc_output/
+.vitest-cache/
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Package manager artifacts
+.npm/
+.pnpm-store/
+.yarn/cache
+.yarn/install-state.gz
+
+# Env files
+.env
+.env.local
+.env.*.local
+.env.development
+.env.staging
+.env.production
+
+# IDE / editor
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+*.swp
+*.swo
+
+# OS files
 .DS_Store
+Thumbs.db
+desktop.ini
+
+# Configure-run side-effects (Playwright venv used by Step 4.5)
+.venv-configure/
+
+# Release tooling
+.release-please-*.lock
+
+# Tailwind / PostCSS scratch
+.postcssrc
