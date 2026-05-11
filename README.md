@@ -34,7 +34,7 @@ Fleet managers, operations directors, data analysts, and HR / safety officers at
 
 ## Project structure
 
-```
+```text
 src/
 ├── backend/        # NestJS API (kind=server, language=typescript)
 └── frontend/       # React + Tailwind SPA (kind=client, language=typescript)
