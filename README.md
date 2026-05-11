@@ -28,7 +28,7 @@ Fleet managers, operations directors, data analysts, and HR / safety officers at
 - **Cache / queue:** Redis (ElastiCache) + BullMQ
 - **Testing:** Vitest, Playwright
 - **CI:** GitHub Actions (lint + typecheck + test + build)
-- **AI PR review:** Claude (Sonnet 4.5 on AWS Bedrock) leaves a sticky review comment on every PR
+- **AI PR review:** Claude (Sonnet 4.6 on AWS Bedrock) leaves a sticky review comment on every PR
 - **Release automation:** Release Please
 - **Deployment:** AWS (EC2 + Auto Scaling Group, Aurora Postgres, ElastiCache Redis, S3, CloudFront, Secrets Manager) — staging + production environments
 
