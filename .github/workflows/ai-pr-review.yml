@@ -29,7 +29,7 @@ jobs:
           use_bedrock: 'true'
           use_sticky_comment: 'true'
           claude_args: |
-            --model us.anthropic.claude-sonnet-4-6-20251001-v1:0
+            --model us.anthropic.claude-sonnet-4-5-20250929-v1:0
           prompt: |
             You are reviewing this pull request for ai-template-reference (fleet operations — a web app for fleet managers, operations directors, data analysts, and HR/safety officers).
 
