@@ -1,0 +1,24 @@
+title = "fleet-operations gitleaks config"
+
+[extend]
+# Inherit the default ruleset and add project-specific allowlist entries below.
+useDefault = true
+
+[allowlist]
+description = "Project-specific allowlist"
+paths = [
+  '''(^|/)docs/requirements/fleet_mockup\.html$''',
+  '''(^|/)docs/requirements/fleet_operations_spec\.md$''',
+  '''(^|/)ai-instructions/requirements/.*''',
+  '''(^|/)\.env\.example$''',
+  '''(^|/)package-lock\.json$''',
+  '''(^|/)pnpm-lock\.yaml$''',
+  '''(^|/)yarn\.lock$''',
+]
+regexes = [
+  # Allow obviously placeholder API keys in docs / examples
+  '''(?i)(your[-_]?key|placeholder|example|dummy|sample|test)[-_]?(api|secret|token|password|key)''',
+  # Ignore Argon2id / bcrypt example hashes in the spec
+  '''\$argon2id\$v=19\$''',
+  '''\$2[aby]\$\d{2}\$''',
+]

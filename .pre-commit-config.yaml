@@ -1,0 +1,105 @@
+# pre-commit framework configuration.
+# Install: `pipx install pre-commit && pre-commit install --install-hooks`
+# Run all hooks against the working tree: `pre-commit run --all-files`
+
+repos:
+  # Generic hygiene
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: ["--allow-multiple-documents"]
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=512"]
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+
+  # Secret scanning
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+
+  # Prettier (TypeScript / JSON / Markdown / CSS / YAML)
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        additional_dependencies:
+          - prettier@3.3.3
+        types_or: [ts, tsx, javascript, jsx, json, yaml, markdown, css, scss]
+
+  # ESLint (TypeScript / React) — runs only when src/backend or src/frontend exists
+  - repo: local
+    hooks:
+      - id: eslint-staged-modules
+        name: eslint (changed files in src/backend or src/frontend)
+        language: system
+        files: ^src/(backend|frontend)/.*\.(ts|tsx|js|jsx)$
+        entry: bash -c '
+          changed_files=("$@");
+          backend_files=();
+          frontend_files=();
+          for f in "${changed_files[@]}"; do
+            case "$f" in
+              src/backend/*)  [ -f src/backend/package.json ]  && backend_files+=("$f") ;;
+              src/frontend/*) [ -f src/frontend/package.json ] && frontend_files+=("$f") ;;
+            esac
+          done
+          if [ ${#backend_files[@]} -gt 0 ]; then
+            ( cd src/backend  && npx --no-install eslint --max-warnings=0 "${backend_files[@]#src/backend/}" )
+          fi
+          if [ ${#frontend_files[@]} -gt 0 ]; then
+            ( cd src/frontend && npx --no-install eslint --max-warnings=0 "${frontend_files[@]#src/frontend/}" )
+          fi
+          ' --
+
+  # Conventional Commits + Jira KAN-N enforcement on the commit message
+  - repo: local
+    hooks:
+      - id: conventional-commit-with-jira
+        name: commit message — Conventional Commits + KAN-N
+        stages: [commit-msg]
+        language: system
+        entry: bash -c '
+          msg_file="$1";
+          first_line=$(head -n1 "$msg_file" | sed -e "s/#.*//" -e "s/[[:space:]]*$//");
+          # Allow release-please bot commits without a Jira key
+          if printf "%s" "$first_line" | grep -qE "^chore: release [0-9]+\.[0-9]+\.[0-9]+$"; then exit 0; fi
+          # Conventional Commits + KAN-NNN
+          if ! printf "%s" "$first_line" | grep -qE "^(feat|fix|chore|docs|refactor|test|perf|build|ci|style|revert)(\([^)]+\))?(!)?: KAN-[0-9]+ .+"; then
+            echo "----------------------------------------------------------------"
+            echo "Commit message must be Conventional Commits + Jira KAN-N."
+            echo "Example: feat: KAN-123 add SQL console sandbox guard"
+            echo "Got:     ${first_line}"
+            echo "----------------------------------------------------------------"
+            exit 1
+          fi
+          ' --
+
+  # Pre-push: lint + typecheck on every module that exists
+  - repo: local
+    hooks:
+      - id: lint-typecheck-pre-push
+        name: lint + typecheck (per module that exists)
+        stages: [pre-push]
+        language: system
+        always_run: true
+        pass_filenames: false
+        entry: bash -c '
+          any=0;
+          for m in src/backend src/frontend; do
+            if [ -f "$m/package.json" ]; then
+              any=1;
+              echo "==> $m: lint";
+              ( cd "$m" && npm run --silent lint ) || exit 1;
+              echo "==> $m: typecheck";
+              ( cd "$m" && npm run --silent typecheck ) || exit 1;
+            fi;
+          done;
+          if [ "$any" = "0" ]; then echo "No module sources yet — skipping pre-push checks."; fi
+          '

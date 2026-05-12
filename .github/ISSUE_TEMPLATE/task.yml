@@ -1,0 +1,48 @@
+name: ✅ Task
+description: Concrete work item that follows from existing spec / decisions.
+title: "Task: "
+labels: ["task"]
+body:
+  - type: input
+    id: summary
+    attributes:
+      label: Title (auto-prefixed with "Task:")
+      placeholder: Add Argon2id parameter audit to the auth module
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What needs doing, and what's the context that makes it actionable?
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance criteria
+      description: Specific outcomes that signal "done".
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Blocker
+        - Major
+        - Minor
+        - Trivial
+    validations:
+      required: true
+
+  - type: input
+    id: jira_link
+    attributes:
+      label: Linked Jira ticket
+      placeholder: KAN-789
+    validations:
+      required: false

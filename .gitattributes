@@ -1,0 +1,56 @@
+# Auto-detect and normalize line endings on commit
+* text=auto eol=lf
+
+# Source code
+*.ts        text eol=lf
+*.tsx       text eol=lf
+*.js        text eol=lf
+*.jsx       text eol=lf
+*.mjs       text eol=lf
+*.cjs       text eol=lf
+*.json      text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.toml      text eol=lf
+*.md        text eol=lf diff=markdown
+*.css       text eol=lf diff=css
+*.scss      text eol=lf
+*.html      text eol=lf diff=html
+*.svg       text eol=lf
+*.sh        text eol=lf
+*.sql       text eol=lf
+
+# Lockfiles (binary-ish in practice — keep noise out of diffs)
+package-lock.json   linguist-generated=true -diff
+pnpm-lock.yaml      linguist-generated=true -diff
+yarn.lock           linguist-generated=true -diff
+
+# Generated
+*.tsbuildinfo  linguist-generated=true -diff
+dist/**        linguist-generated=true -diff
+
+# Binary
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.webp      binary
+*.bmp       binary
+*.tiff      binary
+*.ico       binary
+*.pdf       binary
+*.zip       binary
+*.tar.gz    binary
+*.tgz       binary
+*.woff      binary
+*.woff2     binary
+*.ttf       binary
+*.otf       binary
+*.eot       binary
+*.mp4       binary
+*.webm      binary
+
+# Git LFS candidates for very large prototype assets (uncomment if added)
+# *.fig    filter=lfs diff=lfs merge=lfs -text
+# *.psd    filter=lfs diff=lfs merge=lfs -text
+# *.sketch filter=lfs diff=lfs merge=lfs -text

@@ -1,0 +1,25 @@
+# CODEOWNERS — auto-assigned reviewers on every PR.
+# Syntax: pattern <whitespace> owner(s)
+#
+# Replace @sidious18 with the GitHub team(s) or per-area owners once those
+# exist. `*` is the catch-all; later, more-specific patterns win.
+
+# Catch-all
+*                                       @sidious18
+
+# Backend module
+/src/backend/**                         @sidious18
+
+# Frontend module
+/src/frontend/**                        @sidious18
+
+# CI + repo-wide automation
+/.github/**                             @sidious18
+
+# Docs and human-facing guides
+/docs/**                                @sidious18
+
+# AI pack — Tech-Lead-owned
+/ai-instructions/**                     @sidious18
+/ai-plugins.json                        @sidious18
+/CLAUDE.md                              @sidious18

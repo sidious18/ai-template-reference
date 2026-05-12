@@ -1,0 +1,133 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+  security-events: write
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ----------------------------------------------------------------------
+  # Per-module checks. The no-workspace guard keeps PRs opened before
+  # /new-release first scaffolds src/backend or src/frontend green.
+  # ----------------------------------------------------------------------
+  module:
+    name: ${{ matrix.module }} · ${{ matrix.job }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [backend, frontend]
+        job: [lint, typecheck, test, build]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Skip if module source does not exist yet
+        id: scope
+        run: |
+          if [ -d "src/${{ matrix.module }}" ] && [ -f "src/${{ matrix.module }}/package.json" ]; then
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::No src/${{ matrix.module }} sources yet — skipping ${{ matrix.job }} job."
+          fi
+
+      - if: steps.scope.outputs.skip == 'false'
+        name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: 'src/${{ matrix.module }}/package-lock.json'
+
+      - if: steps.scope.outputs.skip == 'false'
+        name: Install dependencies
+        working-directory: 'src/${{ matrix.module }}'
+        run: npm ci
+
+      - if: steps.scope.outputs.skip == 'false' && matrix.job == 'lint'
+        name: Lint
+        working-directory: 'src/${{ matrix.module }}'
+        run: npm run lint
+
+      - if: steps.scope.outputs.skip == 'false' && matrix.job == 'typecheck'
+        name: Typecheck
+        working-directory: 'src/${{ matrix.module }}'
+        run: npm run typecheck
+
+      - if: steps.scope.outputs.skip == 'false' && matrix.job == 'test'
+        name: Test
+        working-directory: 'src/${{ matrix.module }}'
+        run: npm test -- --coverage
+
+      - if: steps.scope.outputs.skip == 'false' && matrix.job == 'build'
+        name: Build
+        working-directory: 'src/${{ matrix.module }}'
+        run: npm run build
+
+      - if: steps.scope.outputs.skip == 'false' && matrix.job == 'build'
+        name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.module }}-${{ github.sha }}
+          path: src/${{ matrix.module }}/dist
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # ----------------------------------------------------------------------
+  # Status-check aliases — the names required-checks references in branch
+  # protection. They depend on the matrix job; with the no-workspace guard,
+  # they resolve to "skipped" until /new-release scaffolds the modules.
+  # ----------------------------------------------------------------------
+  lint:
+    needs: module
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - run: echo "lint matrix complete"
+
+  typecheck:
+    needs: module
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - run: echo "typecheck matrix complete"
+
+  test:
+    needs: module
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - run: echo "test matrix complete"
+
+  build:
+    needs: module
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - run: echo "build matrix complete"
+
+  # ----------------------------------------------------------------------
+  # gitleaks — secret scanning over PR diff + git history.
+  # The no-workspace guard does NOT apply here: gitleaks scans the repo
+  # from the first commit, regardless of whether modules exist yet.
+  # ----------------------------------------------------------------------
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml

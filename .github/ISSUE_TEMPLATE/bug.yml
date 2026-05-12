@@ -1,0 +1,87 @@
+name: 🐛 Bug
+description: Something is broken or not behaving as the spec says it should.
+title: "Bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a bug. Please fill in every required field so the
+        triage step has enough to act on. If this is a **security**
+        vulnerability, do not open a public issue — follow
+        [SECURITY.md](../SECURITY.md) instead.
+
+  - type: input
+    id: summary
+    attributes:
+      label: Title (auto-prefixed with "Bug:")
+      description: One-line summary of the problem.
+      placeholder: Dashboard widget picker remains open after selecting "Trend line"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What did you expect to happen, and what actually happened?
+      placeholder: |
+        - Expected: …
+        - Actual: …
+        - Reproduction steps:
+          1. …
+          2. …
+          3. …
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance criteria
+      description: |
+        What does "fixed" look like? Use the spec's wording where applicable.
+        At least one Given/When/Then or a bulleted list of observable outcomes.
+      placeholder: |
+        - When a widget is selected, the picker must close.
+        - The newly-placed widget renders inside the selected region.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Blocker
+        - Major
+        - Minor
+        - Trivial
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser + version, OS, workspace slug, deployment (local/staging/prod).
+      placeholder: Chrome 130 on macOS 15.1; staging; workspace `acme-logistics`
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs / screenshots
+      description: Paste browser console / server logs (redact secrets) or attach screenshots.
+    validations:
+      required: false
+
+  - type: input
+    id: jira_link
+    attributes:
+      label: Linked Jira ticket
+      description: KAN-NNN — leave blank if a ticket doesn't exist yet.
+      placeholder: KAN-123
+    validations:
+      required: false

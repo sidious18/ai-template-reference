@@ -1,0 +1,155 @@
+name: deploy-production
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref to deploy (tag or commit SHA)"
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  # ----------------------------------------------------------------------
+  # Frontend → Vercel (production)
+  # The `environment: production` gate requires manual reviewer approval
+  # (configured in repo Settings → Environments → production).
+  # Required secrets: VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID_FRONTEND
+  # ----------------------------------------------------------------------
+  frontend:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.event.release.tag_name }}
+
+      - name: Skip if frontend module does not exist yet
+        id: scope
+        run: |
+          if [ -d "src/frontend" ] && [ -f "src/frontend/package.json" ]; then
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::src/frontend does not exist yet — skipping frontend production deploy."
+          fi
+
+      - if: steps.scope.outputs.skip == 'false'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: 'src/frontend/package-lock.json'
+
+      - if: steps.scope.outputs.skip == 'false'
+        name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - if: steps.scope.outputs.skip == 'false'
+        name: Pull Vercel production environment
+        working-directory: src/frontend
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+
+      - if: steps.scope.outputs.skip == 'false'
+        name: Build prebuilt production artifact
+        working-directory: src/frontend
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel build --prod --token="$VERCEL_TOKEN"
+
+      - if: steps.scope.outputs.skip == 'false'
+        name: Deploy production
+        id: deploy
+        working-directory: src/frontend
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
+        run: |
+          url=$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "::notice::Frontend production URL: $url"
+
+      - if: steps.scope.outputs.skip == 'false'
+        name: Smoke test (root)
+        run: |
+          url="${{ steps.deploy.outputs.url }}"
+          curl --retry 5 --retry-delay 5 --max-time 30 -fsS "$url/" > /dev/null
+
+      - if: failure() && steps.scope.outputs.skip == 'false'
+        name: Roll back production
+        working-directory: src/frontend
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          echo "::warning::Smoke test failed — promoting the previous production deployment."
+          previous=$(vercel ls --token="$VERCEL_TOKEN" --prod | awk 'NR==2 {print $1}')
+          if [ -n "$previous" ]; then
+            vercel promote "$previous" --token="$VERCEL_TOKEN"
+          fi
+
+  # ----------------------------------------------------------------------
+  # Backend → Render (production)
+  # Required secret: RENDER_DEPLOY_HOOK_PRODUCTION
+  # ----------------------------------------------------------------------
+  backend:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.event.release.tag_name }}
+
+      - name: Skip if backend module does not exist yet
+        id: scope
+        run: |
+          if [ -d "src/backend" ] && [ -f "src/backend/package.json" ]; then
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::src/backend does not exist yet — skipping backend production deploy."
+          fi
+
+      - if: steps.scope.outputs.skip == 'false'
+        name: Trigger Render production deploy
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_PRODUCTION }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::error::RENDER_DEPLOY_HOOK_PRODUCTION secret is missing."
+            exit 1
+          fi
+          response=$(curl --fail --silent --show-error -X POST "$HOOK")
+          echo "::notice::Render production deploy response: $response"
+
+      - if: steps.scope.outputs.skip == 'false'
+        name: Smoke test /healthz (wait up to 10 min)
+        env:
+          HEALTHZ_URL: ${{ vars.BACKEND_PRODUCTION_HEALTHZ_URL }}
+        run: |
+          if [ -z "$HEALTHZ_URL" ]; then
+            echo "::warning::BACKEND_PRODUCTION_HEALTHZ_URL repository var is not set — skipping smoke test."
+            exit 0
+          fi
+          for i in $(seq 1 60); do
+            if curl --fail --silent --max-time 10 "$HEALTHZ_URL" > /dev/null; then
+              echo "::notice::Backend production /healthz is green (attempt $i)."
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::Backend production /healthz did not return 200 within 10 minutes."
+          echo "::warning::Render does not support automatic rollback via the deploy-hook flow."
+          echo "::warning::Roll back manually in the Render dashboard if the deploy is bad."
+          exit 1

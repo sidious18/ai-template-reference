@@ -1,0 +1,25 @@
+name: pr-title-check
+
+on:
+  pull_request:
+    types: [opened, edited, reopened]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          # Accept Conventional Commits with the Jira key (KAN-N) inline,
+          # plus the auto-generated release-please title "chore: release X.Y.Z".
+          PATTERN: '^(?:(feat|fix|chore|docs|refactor|test|perf|build|ci|style|revert)(\(.+\))?(!)?: KAN-\d+ .+|chore: release \d+\.\d+\.\d+)$'
+        run: |
+          printf '%s' "$PR_TITLE" | grep -qE "$PATTERN" || {
+            echo "PR title does not match required pattern: $PATTERN"
+            echo "Got: $PR_TITLE"
+            exit 1
+          }

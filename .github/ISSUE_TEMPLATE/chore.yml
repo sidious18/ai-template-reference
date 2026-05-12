@@ -1,0 +1,48 @@
+name: 🧹 Chore
+description: Maintenance, refactoring, dependency bumps, build/CI tweaks — anything without direct user impact.
+title: "Chore: "
+labels: ["chore"]
+body:
+  - type: input
+    id: summary
+    attributes:
+      label: Title (auto-prefixed with "Chore:")
+      placeholder: Bump TypeScript to 5.6 across both modules
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Why this chore is worth doing now, and what changes.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance criteria
+      description: What signals "done"? Usually: CI green, no observable behavior change.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Blocker
+        - Major
+        - Minor
+        - Trivial
+    validations:
+      required: true
+
+  - type: input
+    id: jira_link
+    attributes:
+      label: Linked Jira ticket
+      placeholder: KAN-555
+    validations:
+      required: false

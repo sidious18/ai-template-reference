@@ -1,0 +1,66 @@
+name: ✨ Feature
+description: Propose a new capability or significant enhancement.
+title: "Feature: "
+labels: ["feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for net-new product capabilities. For small,
+        well-scoped work that follows from the spec, use **Task** instead.
+
+  - type: input
+    id: summary
+    attributes:
+      label: Title (auto-prefixed with "Feature:")
+      description: One-line summary of the proposed capability.
+      placeholder: Add team-shared schedule view alongside personal layouts
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What is the capability, who is it for, and what problem does it solve?
+      placeholder: |
+        - User problem this addresses: …
+        - Proposed shape (UI / API / data model): …
+        - Out of scope for the first cut: …
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance criteria
+      description: |
+        Specific, observable outcomes. The reviewer should be able to verify each
+        bullet on staging without ambiguity.
+      placeholder: |
+        - A Manager can view schedules shared with their team.
+        - Schedules can be filtered by region and date range.
+        - Permission matrix from spec §6.6 is honored.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Priority (severity-shape for consistency)
+      options:
+        - Blocker
+        - Major
+        - Minor
+        - Trivial
+    validations:
+      required: true
+
+  - type: input
+    id: jira_link
+    attributes:
+      label: Linked Jira ticket
+      description: KAN-NNN — fill once a Jira ticket exists.
+      placeholder: KAN-456
+    validations:
+      required: false

@@ -1,0 +1,134 @@
+name: deploy-staging
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+jobs:
+  # ----------------------------------------------------------------------
+  # Frontend → Vercel (staging / preview)
+  # Required secrets: VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID_FRONTEND
+  # ----------------------------------------------------------------------
+  frontend:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Skip if frontend module does not exist yet
+        id: scope
+        run: |
+          if [ -d "src/frontend" ] && [ -f "src/frontend/package.json" ]; then
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::src/frontend does not exist yet — skipping frontend staging deploy."
+          fi
+
+      - if: steps.scope.outputs.skip == 'false'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: 'src/frontend/package-lock.json'
+
+      - if: steps.scope.outputs.skip == 'false'
+        name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - if: steps.scope.outputs.skip == 'false'
+        name: Pull Vercel environment
+        working-directory: src/frontend
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
+        run: vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
+
+      - if: steps.scope.outputs.skip == 'false'
+        name: Build prebuilt artifact
+        working-directory: src/frontend
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel build --token="$VERCEL_TOKEN"
+
+      - if: steps.scope.outputs.skip == 'false'
+        name: Deploy preview
+        id: deploy
+        working-directory: src/frontend
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
+        run: |
+          url=$(vercel deploy --prebuilt --token="$VERCEL_TOKEN")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "::notice::Frontend staging URL: $url"
+
+      - if: steps.scope.outputs.skip == 'false'
+        name: Smoke test (root + /healthz)
+        run: |
+          url="${{ steps.deploy.outputs.url }}"
+          curl --retry 5 --retry-delay 5 --max-time 30 -fsS "$url/" > /dev/null
+          # /healthz is proxied to the backend on the platform; tolerate a redirect.
+          curl --retry 3 --retry-delay 5 --max-time 30 -fsSL "$url/healthz" > /dev/null || true
+
+  # ----------------------------------------------------------------------
+  # Backend → Render (staging)
+  # Render exposes a "deploy hook" URL — easier than the API for a single
+  # service. Required secret: RENDER_DEPLOY_HOOK_STAGING.
+  # ----------------------------------------------------------------------
+  backend:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Skip if backend module does not exist yet
+        id: scope
+        run: |
+          if [ -d "src/backend" ] && [ -f "src/backend/package.json" ]; then
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::src/backend does not exist yet — skipping backend staging deploy."
+          fi
+
+      - if: steps.scope.outputs.skip == 'false'
+        name: Trigger Render staging deploy
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_STAGING }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::error::RENDER_DEPLOY_HOOK_STAGING secret is missing."
+            exit 1
+          fi
+          # The deploy hook returns the deploy id; surface it for traceability.
+          response=$(curl --fail --silent --show-error -X POST "$HOOK")
+          echo "::notice::Render staging deploy response: $response"
+
+      - if: steps.scope.outputs.skip == 'false'
+        name: Smoke test /healthz (wait up to 5 min for the new deploy)
+        env:
+          HEALTHZ_URL: ${{ vars.BACKEND_STAGING_HEALTHZ_URL }}
+        run: |
+          if [ -z "$HEALTHZ_URL" ]; then
+            echo "::warning::BACKEND_STAGING_HEALTHZ_URL repository var is not set — skipping smoke test."
+            exit 0
+          fi
+          for i in $(seq 1 30); do
+            if curl --fail --silent --max-time 10 "$HEALTHZ_URL" > /dev/null; then
+              echo "::notice::Backend staging /healthz is green (attempt $i)."
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::Backend staging /healthz did not return 200 within 5 minutes."
+          exit 1

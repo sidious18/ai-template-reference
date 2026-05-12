@@ -1,0 +1,37 @@
+# actions/labeler@v5 — path-based PR labels.
+
+backend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/backend/**'
+
+frontend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/frontend/**'
+
+docs:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'docs/**'
+          - 'README.md'
+          - 'CONTRIBUTING.md'
+          - 'SECURITY.md'
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/**'
+          - '.pre-commit-config.yaml'
+          - '.gitleaks.toml'
+
+ai-pack:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'ai-instructions/**'
+          - 'ai-plugins.json'
+          - 'CLAUDE.md'
+
+release:
+  - head-branch:
+      - '^release-please--branches--'
