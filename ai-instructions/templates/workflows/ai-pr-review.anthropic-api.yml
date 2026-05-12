@@ -1,0 +1,67 @@
+# Template: AI PR review via direct Anthropic API
+#
+# Used by `/configure` Step 5g.1 when
+# `integrations.github.rules.prs.ai_review.provider == "anthropic-api"`.
+# `/configure` substitutes:
+#   {{PROJECT_NAME}}      → project.name from configure.json
+#   {{AI_REVIEW_MODEL}}   → integrations.github.rules.prs.ai_review.model
+#                           (default: claude-sonnet-4-6)
+#
+# Prerequisites the user must complete before the first run:
+#   1. Get an API key at https://console.anthropic.com/
+#      ($5 minimum top-up at time of writing).
+#   2. Set the repo secret:
+#        gh secret set ANTHROPIC_API_KEY --body "sk-ant-..."
+#
+# Caveat — workflow-validation gate:
+#   `anthropics/claude-code-action@v1` requires the workflow file on the
+#   PR head to byte-equal the version on the default branch. The
+#   configure PR adds this file for the first time, so its review is
+#   skipped with a "this is normal on first run" message. Real reviews
+#   begin on the next PR after configure merges.
+
+name: ai-pr-review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Claude PR review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          use_sticky_comment: "true"
+          claude_args: |
+            --model {{AI_REVIEW_MODEL}}
+          prompt: |
+            You are reviewing this pull request for {{PROJECT_NAME}}.
+
+            Produce ONE comment with these sections:
+
+            1. **Summary** — 2–3 sentences on what this change does.
+            2. **Findings** — concrete issues only. Cite file:line.
+               Group by:
+                 - Correctness / bugs
+                 - Security
+                 - Performance
+                 - Maintainability / readability
+               Skip stylistic nitpicks already enforced by linters.
+            3. **Suggestions** — actionable changes the author can make.
+               Quote the diff snippet you'd change.
+            4. **Verdict** — one of: approve · request-changes ·
+               comment-only.
+
+            Project conventions live in `docs/conventions/` and
+            `CLAUDE.md` — honor them when those files are present.

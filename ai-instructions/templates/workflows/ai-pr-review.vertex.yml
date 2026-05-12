@@ -1,0 +1,89 @@
+# Template: AI PR review via Google Vertex AI (advanced)
+#
+# Used by `/configure` Step 5g.1 when
+# `integrations.github.rules.prs.ai_review.provider == "vertex"`.
+# `/configure` substitutes:
+#   {{PROJECT_NAME}}      → project.name from configure.json
+#   {{AI_REVIEW_MODEL}}   → integrations.github.rules.prs.ai_review.model
+#                           (default: claude-sonnet-4-6@20251001)
+#   {{AI_REVIEW_REGION}}  → integrations.github.rules.prs.ai_review.region
+#                           (default: us-east5 — canonical Claude-on-
+#                            Vertex region at time of writing)
+#
+# Prerequisites the user must complete before the first run:
+#   1. GCP project with Vertex AI enabled and the chosen Claude model
+#      available in the chosen region.
+#   2. GCP service account with the Vertex AI User role on the project.
+#   3. Workload Identity Federation pool + provider configured for
+#      GitHub Actions to assume the service account.
+#   4. Three repo secrets:
+#        gh secret set AI_REVIEW_GCP_WIF_PROVIDER --body "projects/.../locations/global/workloadIdentityPools/.../providers/..."
+#        gh secret set AI_REVIEW_GCP_SA_EMAIL    --body "ai-review@<project>.iam.gserviceaccount.com"
+#        gh secret set AI_REVIEW_GCP_PROJECT_ID  --body "<project-id>"
+#
+# Caveat — workflow-validation gate:
+#   `anthropics/claude-code-action@v1` requires the workflow file on
+#   the PR head to byte-equal the version on the default branch. The
+#   configure PR adds this file for the first time, so its review is
+#   skipped. Real reviews begin on the next PR after configure merges.
+#
+# Caveat — Dependabot PRs:
+#   Dependabot PRs run with restricted secrets, so the WIF secrets are
+#   empty on those runs. Either grant Dependabot access in repo
+#   settings, or accept that Dependabot PRs are not AI-reviewed.
+
+name: ai-pr-review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Authenticate to Google Cloud (OIDC)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.AI_REVIEW_GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.AI_REVIEW_GCP_SA_EMAIL }}
+
+      - name: Run Claude PR review
+        uses: anthropics/claude-code-action@v1
+        env:
+          ANTHROPIC_VERTEX_PROJECT_ID: ${{ secrets.AI_REVIEW_GCP_PROJECT_ID }}
+          CLOUD_ML_REGION: {{AI_REVIEW_REGION}}
+        with:
+          use_vertex: "true"
+          use_sticky_comment: "true"
+          claude_args: |
+            --model {{AI_REVIEW_MODEL}}
+          prompt: |
+            You are reviewing this pull request for {{PROJECT_NAME}}.
+
+            Produce ONE comment with these sections:
+
+            1. **Summary** — 2–3 sentences on what this change does.
+            2. **Findings** — concrete issues only. Cite file:line.
+               Group by:
+                 - Correctness / bugs
+                 - Security
+                 - Performance
+                 - Maintainability / readability
+               Skip stylistic nitpicks already enforced by linters.
+            3. **Suggestions** — actionable changes the author can make.
+               Quote the diff snippet you'd change.
+            4. **Verdict** — one of: approve · request-changes ·
+               comment-only.
+
+            Project conventions live in `docs/conventions/` and
+            `CLAUDE.md` — honor them when those files are present.

@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://claude.ai/ai-plugins.schema.json",
+  "title": "AI Plugin Manifest",
+  "description": "Declares the AI instruction pack plugins (roles, guides, guidelines, refactoring docs, commands) this project depends on. Behaves like package.json for the AI instruction pack.",
+  "type": "object",
+  "required": ["name", "version", "mode", "approval_rate", "stack", "layout", "plugins", "commands"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Project name. Lowercase letters, digits, and hyphens only."
+    },
+    "version": {
+      "type": "string",
+      "description": "Semver string describing the current version of this project's AI instruction pack."
+    },
+    "mode": {
+      "enum": ["auto", "semi-auto", "manual"],
+      "description": "Discovery verbosity for release commands. auto = run end-to-end with ~0-3 BA questions; semi-auto = ask for approval at decision points (~5-10 questions); manual = ask before each meaningful step (~10-20 questions). Set during /bootstrap Step 0; can be changed by editing ai-plugins.json directly or re-running /bootstrap."
+    },
+    "approval_rate": {
+      "enum": ["auto", "per-category", "per-file"],
+      "description": "Global default for how often to pause for user approval when writing files. auto = write everything immediately; per-category = pause at each major artifact group (docs, .github/, hooks, release config, Confluence, PR/tickets) — ~6-8 gates per /configure full run; per-file = show every file's content and confirm individually — ~30-40 gates per Full run, slow but maximum oversight. **Side-effect steps (creating Confluence pages, Jira tickets, GitHub PRs) gate regardless of this setting** — external state cannot be unwritten. Per-command overrides live in `approval_rate_overrides`."
+    },
+    "approval_rate_overrides": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional per-command overrides for `approval_rate`. Any command listed here uses the override value instead of the global. Commands not listed inherit. `/delete-release` is destructive end-to-end and is intentionally absent — it always gates regardless of any setting.",
+      "properties": {
+        "configure":       { "enum": ["auto", "per-category", "per-file", "inherit"] },
+        "bootstrap":       { "enum": ["auto", "per-category", "per-file", "inherit"] },
+        "edit_config":     { "enum": ["auto", "per-category", "per-file", "inherit"] },
+        "new_release":     { "enum": ["auto", "per-category", "per-file", "inherit"] },
+        "edit_release":    { "enum": ["auto", "per-category", "per-file", "inherit"] },
+        "finish_release":  { "enum": ["auto", "per-category", "per-file", "inherit"] }
+      }
+    },
+    "review_editor": {
+      "enum": ["auto", "vscode", "cursor", "intellij", "pycharm", "webstorm", "chat-only"],
+      "default": "auto",
+      "description": "Which editor to open staged files in when an approval gate fires (per-category or per-file). 'auto' probes the user's PATH in priority order: code → cursor → idea/pycharm/webstorm → chat-only fallback. Set explicitly to override. 'chat-only' disables editor opening entirely and prints file content inline (matches the pre-staging UX). For diff views, the chosen editor's diff flag is used when available (e.g., `code --diff` for VS Code/Cursor). Does not apply to .html / .htm files — those follow `review_html_in`."
+    },
+    "review_html_in": {
+      "enum": ["browser", "editor", "both", "chat-only"],
+      "default": "browser",
+      "description": "Where to open staged .html / .htm files at an approval gate. HTML is meant to be rendered, so the default is 'browser' — open via the OS default-handler command (`open` on macOS, `xdg-open` on Linux, `start` on Windows / WSL). 'editor' treats HTML like any other text file and opens it in the editor tab using `review_editor`. 'both' opens it in the browser AND the editor tab — useful for seeing the rendered output and editing the source side-by-side. 'chat-only' prints HTML source inline (escape hatch for headless environments). When 'browser' is set and the user picks 'edit' at the gate prompt, the file is also opened in the editor tab at that point so the user can actually modify it. Applies to Confluence local-docs pages (Step 5m), preserved HTML requirement files (Step 4.5), and any other HTML produced by the gates."
+    },
+    "stack": {
+      "type": "object",
+      "description": "Detected / chosen technology stack. Short lowercase identifiers.",
+      "properties": {
+        "backend": { "type": "array", "items": { "type": "string" } },
+        "frontend": { "type": "array", "items": { "type": "string" } },
+        "database": { "type": "array", "items": { "type": "string" } },
+        "testing": { "type": "array", "items": { "type": "string" } },
+        "infra": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": {
+        "type": "array",
+        "items": { "type": "string" }
+      }
+    },
+    "layout": {
+      "type": "object",
+      "required": ["kind", "modules"],
+      "additionalProperties": false,
+      "description": "Project shape declared during /configure. The template no longer assumes any particular layout — every module is explicit.",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "description": "How the user described the project during /configure (e.g., 'web-app', 'api', 'cli', 'library', 'mobile-app', 'iac', 'data-pipeline', 'documentation-site', 'monorepo', 'browser-extension', 'desktop-app', 'embedded', 'game', or any custom string the user supplied). Free-form — used only as a documentation hint and to drive default question sets in /configure. Bootstrap and the release commands key off `modules[]` instead."
+        },
+        "modules": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Every code module the project contains. Source files may only live in paths declared by a module entry (or in layout.exceptions). 'Module' is intentionally generic: it can be a server, a client, a library, an IaC tree, a mobile target, a docs site theme, etc. The shape of the project is the set of modules declared here.",
+          "items": {
+            "type": "object",
+            "required": ["name", "path", "kind"],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+                "description": "Lowercase-hyphen identifier for this module. Used in CI matrix names, label paths, and AI prompts."
+              },
+              "path": {
+                "type": "string",
+                "description": "Project-root-relative path to the module. Conventional choices include 'src/{name}', '{name}/', 'modules/{name}/', or whatever the user chose during /configure. No constraint on prefix — the user decides."
+              },
+              "kind": {
+                "type": "string",
+                "description": "Module shape. Common values: 'server', 'client', 'lib', 'cli', 'iac', 'data', 'docs', 'mobile', 'script', 'shared', 'firmware', 'game-asset'. Free-form — drives default question sets and CI job templates but not validation. Pick what describes the module's role honestly."
+              },
+              "language": {
+                "type": "string",
+                "description": "Primary language. e.g., 'python', 'typescript', 'go', 'java', 'rust', 'hcl' (Terraform), 'yaml' (k8s manifests), 'markdown' (docs). Optional for modules with no single primary language."
+              },
+              "manifest": {
+                "type": "string",
+                "description": "Path (project-root-relative) to the module's package manifest if any. Examples: 'src/backend/pyproject.toml', 'apps/web/package.json', 'terraform/.terraform.lock.hcl'. Omit for modules without a manifest (e.g., bash scripts, raw YAML)."
+              },
+              "tests": {
+                "type": "string",
+                "description": "Path to the module's tests. Omit when the module has no automated tests (e.g., docs site, game assets)."
+              },
+              "independent": {
+                "type": "boolean",
+                "default": true,
+                "description": "When true, the module has its own manifest + dependencies and cross-module imports into it are forbidden (typical for server vs. client). When false, the module shares the project's top-level manifest (typical for library subprojects, shared types). The release commands enforce import boundaries based on this field."
+              }
+            }
+          }
+        },
+        "exceptions": {
+          "type": "array",
+          "description": "Files or directories that live outside any declared module path. Each must record its path and a reason. Use sparingly — declaring a new module is preferred over piling up exceptions.",
+          "items": {
+            "type": "object",
+            "required": ["path", "reason"],
+            "additionalProperties": false,
+            "properties": {
+              "path": { "type": "string" },
+              "reason": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "plugins": {
+      "type": "object",
+      "required": ["roles", "guides", "guidelines", "refactoring"],
+      "properties": {
+        "roles": { "$ref": "#/$defs/pluginList" },
+        "guides": { "$ref": "#/$defs/pluginList" },
+        "guidelines": { "$ref": "#/$defs/pluginList" },
+        "refactoring": { "$ref": "#/$defs/pluginList" }
+      }
+    },
+    "commands": {
+      "type": "array",
+      "description": "Every slash command the project ships with. Expected entries (on the standard flow): configure, bootstrap, verify-plugins, new-release, edit-release, finish-release, delete-release, list-releases, list-active-releases. Additional project-specific commands are allowed.",
+      "items": {
+        "type": "object",
+        "required": ["name", "path"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+          "path": { "type": "string" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "pluginList": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "path", "enabled"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+          "path": { "type": "string", "description": "Path from project root to the plugin file." },
+          "enabled": { "type": "boolean" },
+          "source": {
+            "enum": ["curated", "generated"],
+            "description": "Whether the file is from the curated set shipped with the template, or generated during bootstrap for this project."
+          },
+          "description": { "type": "string" }
+        }
+      }
+    }
+  }
+}

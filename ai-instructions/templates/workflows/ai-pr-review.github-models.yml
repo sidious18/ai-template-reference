@@ -1,0 +1,102 @@
+# Template: AI PR review via GitHub Models (free, no setup)
+#
+# Used by `/configure` Step 5g.1 when
+# `integrations.github.rules.prs.ai_review.provider == "github-models"`.
+# `/configure` substitutes:
+#   {{PROJECT_NAME}}      → project.name from configure.json
+#   {{AI_REVIEW_MODEL}}   → integrations.github.rules.prs.ai_review.model
+#                           (default: openai/gpt-4o)
+#
+# Why this is the default:
+#   - Free for personal + org repos at the standard tier.
+#   - Uses the workflow's built-in GITHUB_TOKEN (with `models: read`) —
+#     no separate API key, no rotated secret, no external billing.
+#   - actions/ai-inference has no workflow-validation gate, so the
+#     review fires on the configure PR itself, not the one after.
+#   - Works on Dependabot PRs because GITHUB_TOKEN is available there.
+#
+# Free-tier rate limits to know:
+#   - "High" models (gpt-4o): ~50 requests/day, ~10/minute.
+#   - Output tokens capped at ~4000 per request.
+#   - For high-traffic monorepos, consider a paid tier or a different
+#     provider variant.
+
+name: ai-pr-review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  models: read
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Capture PR diff
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr diff ${{ github.event.pull_request.number }} > /tmp/pr.diff
+          # Cap at ~100 KB to stay inside the model context budget.
+          head -c 100000 /tmp/pr.diff > /tmp/pr-prompt.txt
+          if [ "$(wc -c < /tmp/pr.diff)" -gt 100000 ]; then
+            printf '\n\n(diff truncated at 100KB)\n' >> /tmp/pr-prompt.txt
+          fi
+
+      - name: Run AI review
+        id: ai
+        uses: actions/ai-inference@v1
+        with:
+          model: {{AI_REVIEW_MODEL}}
+          system-prompt: |
+            You are reviewing a pull request for {{PROJECT_NAME}}.
+
+            Produce ONE concise comment with these sections:
+
+            1. **Summary** — 2–3 sentences on what this change does.
+            2. **Findings** — concrete issues only. Cite file:line.
+               Group by:
+                 - Correctness / bugs
+                 - Security (auth, secrets, injection, PII, rate limits)
+                 - Performance
+                 - Maintainability / readability
+               Skip stylistic nitpicks already enforced by linters.
+            3. **Suggestions** — actionable changes with quoted diff
+               snippets the author can apply directly.
+            4. **Verdict** — one of: approve · request-changes ·
+               comment-only.
+
+            Honor conventions in `docs/conventions/` and per-role specs
+            in `docs/roles/` when those files are present. The configure
+            PR (this workflow's first run) is reviewing template-
+            generated artifacts, so those files may not exist yet — in
+            that case, focus on whether the artifacts look internally
+            consistent.
+          prompt-file: /tmp/pr-prompt.txt
+
+      - name: Post or update sticky review comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REVIEW: ${{ steps.ai.outputs.response }}
+        run: |
+          MARKER="<!-- ai-pr-review:v1 -->"
+          BODY=$(printf '%s\n\n%s\n' "$MARKER" "$REVIEW")
+          EXISTING=$(gh api \
+            "repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
+            --jq ".[] | select(.body | contains(\"$MARKER\")) | .id" \
+            | head -1)
+          if [ -n "$EXISTING" ]; then
+            gh api -X PATCH \
+              "repos/${{ github.repository }}/issues/comments/$EXISTING" \
+              -f body="$BODY"
+          else
+            gh pr comment "${{ github.event.pull_request.number }}" -b "$BODY"
+          fi
