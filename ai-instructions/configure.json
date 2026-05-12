@@ -82,19 +82,22 @@
       "enforce_ticket_id": true,
       "tech_lead": "maksym.leb18@gmail.com",
       "tech_lead_account_id": "5efde4a524882a0bb5fedd12",
-      "review_ticket": null,
-      "initial_review_ticket_created": false,
+      "review_ticket": {
+        "key": "KAN-35",
+        "url": "https://maksymleb18.atlassian.net/browse/KAN-35"
+      },
+      "initial_review_ticket_created": true,
       "role_onboarding_tickets": {
-        "backend-developer": null,
-        "frontend-developer": null,
-        "ui-ux-designer": null,
-        "business-analyst": null,
-        "tech-lead": null,
-        "qa-engineer": null,
-        "devops-engineer": null,
-        "security-engineer": null,
-        "data-engineer": null,
-        "product-manager": null
+        "backend-developer":  { "key": "KAN-36", "url": "https://maksymleb18.atlassian.net/browse/KAN-36", "blocked_by": "KAN-35" },
+        "frontend-developer": { "key": "KAN-37", "url": "https://maksymleb18.atlassian.net/browse/KAN-37", "blocked_by": "KAN-35" },
+        "ui-ux-designer":     { "key": "KAN-38", "url": "https://maksymleb18.atlassian.net/browse/KAN-38", "blocked_by": "KAN-35" },
+        "business-analyst":   { "key": "KAN-39", "url": "https://maksymleb18.atlassian.net/browse/KAN-39", "blocked_by": "KAN-35" },
+        "tech-lead":          { "key": "KAN-40", "url": "https://maksymleb18.atlassian.net/browse/KAN-40", "blocked_by": "KAN-35" },
+        "qa-engineer":        { "key": "KAN-41", "url": "https://maksymleb18.atlassian.net/browse/KAN-41", "blocked_by": "KAN-35" },
+        "devops-engineer":    { "key": "KAN-42", "url": "https://maksymleb18.atlassian.net/browse/KAN-42", "blocked_by": "KAN-35" },
+        "security-engineer":  { "key": "KAN-43", "url": "https://maksymleb18.atlassian.net/browse/KAN-43", "blocked_by": "KAN-35" },
+        "data-engineer":      { "key": "KAN-44", "url": "https://maksymleb18.atlassian.net/browse/KAN-44", "blocked_by": "KAN-35" },
+        "product-manager":    { "key": "KAN-45", "url": "https://maksymleb18.atlassian.net/browse/KAN-45", "blocked_by": "KAN-35" }
       }
     },
     "github": {
@@ -134,8 +137,13 @@
           }
         }
       },
-      "review_pr": null,
-      "initial_pr_created": false
+      "review_pr": {
+        "number": 12,
+        "url": "https://github.com/sidious18/ai-template-reference/pull/12",
+        "head_branch": "feature/KAN-35-project-setup",
+        "base_branch": "main"
+      },
+      "initial_pr_created": true
     },
     "confluence": {
       "enabled": true,
