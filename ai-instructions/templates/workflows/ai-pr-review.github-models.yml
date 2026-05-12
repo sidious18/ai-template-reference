@@ -17,9 +17,13 @@
 #
 # Free-tier rate limits to know:
 #   - "High" models (gpt-4o): ~50 requests/day, ~10/minute.
+#   - Request body capped at ~8000 tokens (≈ 24 KB) — the diff-capture
+#     step below truncates accordingly and prepends the file list when
+#     it has to. Exceeding the cap returns a 413 on the inference step.
 #   - Output tokens capped at ~4000 per request.
-#   - For high-traffic monorepos, consider a paid tier or a different
-#     provider variant.
+#   - For high-traffic monorepos or PRs that consistently overflow the
+#     request budget, consider a paid tier or a different provider
+#     variant.
 
 name: ai-pr-review
 
@@ -43,12 +47,29 @@ jobs:
       - name: Capture PR diff
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          gh pr diff ${{ github.event.pull_request.number }} > /tmp/pr.diff
-          # Cap at ~100 KB to stay inside the model context budget.
-          head -c 100000 /tmp/pr.diff > /tmp/pr-prompt.txt
-          if [ "$(wc -c < /tmp/pr.diff)" -gt 100000 ]; then
-            printf '\n\n(diff truncated at 100KB)\n' >> /tmp/pr-prompt.txt
+          gh pr diff "$PR_NUMBER" > /tmp/pr.diff
+          # GitHub Models free tier caps gpt-4o input at ~8000 tokens
+          # (≈ 24 KB at 4 chars/token, minus the system prompt budget).
+          # Cap diff at 20 KB so the request stays under the limit; for
+          # large PRs, also include the file list so the review has
+          # context on what wasn't sent.
+          BUDGET_BYTES=20000
+          DIFF_BYTES=$(wc -c < /tmp/pr.diff)
+          if [ "$DIFF_BYTES" -gt "$BUDGET_BYTES" ]; then
+            {
+              echo "## Files changed in this PR"
+              gh pr diff "$PR_NUMBER" --name-only
+              echo
+              echo "## Truncated diff (first ${BUDGET_BYTES} bytes of ${DIFF_BYTES})"
+              echo
+              head -c "$BUDGET_BYTES" /tmp/pr.diff
+              echo
+              echo "(diff truncated to fit the gpt-4o 8000-token request cap on GitHub Models free tier)"
+            } > /tmp/pr-prompt.txt
+          else
+            cp /tmp/pr.diff /tmp/pr-prompt.txt
           fi
 
       - name: Run AI review
