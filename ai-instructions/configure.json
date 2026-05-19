@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "scope": "core",
+  "scope": "full",
   "discovery_mode": "auto",
   "approval_rate": "auto",
   "skipped": [],
@@ -61,13 +61,13 @@
       "review_ticket": "KAN-46",
       "initial_review_ticket_created": true,
       "role_onboarding_tickets": {
-        "backend-developer": null,
-        "frontend-developer": null,
-        "tech-lead": null,
-        "db-architect": null,
-        "data-scientist": null,
-        "ui-ux-designer": null,
-        "qa-engineer": null
+        "backend-developer":  "KAN-47",
+        "frontend-developer": "KAN-48",
+        "tech-lead":          "KAN-49",
+        "db-architect":       "KAN-50",
+        "data-scientist":     "KAN-51",
+        "ui-ux-designer":     "KAN-52",
+        "qa-engineer":        "KAN-53"
       }
     },
     "github": {
@@ -100,13 +100,13 @@
           "require_conversations_resolved": false,
           "block_merge_on_bad_title": false,
           "ai_review": {
-            "provider": "none",
-            "model": null
+            "provider": "github-models",
+            "model": "openai/gpt-4o"
           }
         }
       },
-      "review_pr": null,
-      "initial_pr_created": false
+      "review_pr": "https://github.com/sidious18/ai-template-reference/pull/13",
+      "initial_pr_created": true
     },
     "confluence": {
       "enabled": true,
