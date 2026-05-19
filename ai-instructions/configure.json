@@ -1,0 +1,216 @@
+{
+  "version": "1",
+  "scope": "core",
+  "discovery_mode": "auto",
+  "approval_rate": "auto",
+  "skipped": [],
+  "prereqs": {
+    "git":           { "status": "ok" },
+    "github_mcp":    { "status": "ok" },
+    "atlassian_mcp": { "status": "ok" },
+    "ide_mcp":       { "status": "ok" },
+    "editor_cli":    { "status": "ok", "detected": "vscode" }
+  },
+  "skipped_prereqs": [],
+  "project": {
+    "name": "fleet-operations",
+    "kind": "web-app",
+    "description": "Web application for fleet managers to monitor vehicles, drivers, and trip data through a customizable tile-based dashboard and a research workspace with eleven analytics tools.",
+    "users": "Fleet managers, operations directors, data analysts, HR / safety officers"
+  },
+  "layout": {
+    "kind": "web-app",
+    "modules": [
+      { "name": "backend", "path": "src/backend", "kind": "server", "language": "typescript", "manifest": "src/backend/package.json", "tests": "src/backend/tests", "independent": true },
+      { "name": "frontend", "path": "src/frontend", "kind": "client", "language": "typescript", "manifest": "src/frontend/package.json", "tests": "src/frontend/tests", "independent": true }
+    ],
+    "exceptions": []
+  },
+  "stack": {
+    "backend": { "language": "typescript", "framework": "express", "runtime": "node", "strict_types": true },
+    "frontend": { "framework": "sveltekit", "styling": "tailwind", "strict_types": true },
+    "database": ["postgresql", "clickhouse"],
+    "cache": ["redis"],
+    "testing": ["vitest", "playwright"]
+  },
+  "conventions": {
+    "typescript": { "formatter": "prettier", "linter": "eslint" }
+  },
+  "gitflow": {
+    "model": "trunk-based",
+    "branch_pattern": "feature/{TICKET}-{slug}",
+    "merge_strategy": "squash",
+    "protected_branches": ["main"],
+    "commit_signing": "none",
+    "commit_convention": "conventional-commits"
+  },
+  "integrations": {
+    "jira": {
+      "enabled": true,
+      "project_key": "KAN",
+      "enforce_ticket_id": true,
+      "verified": {
+        "cloud_id": "f7d6cd49-1769-49d0-bde0-5ad06f9d0348",
+        "site": "maksymleb18.atlassian.net",
+        "project_name": "My Kanban Project",
+        "project_id": "10000",
+        "issue_types": ["Epic", "Story", "Task", "Subtask"],
+        "verified_at": "2026-05-19"
+      },
+      "tech_lead": { "account_id": "5efde4a524882a0bb5fedd12", "name": "Maksym Lebedev", "email": "maksym.leb18@gmail.com" },
+      "review_ticket": "KAN-46",
+      "initial_review_ticket_created": true,
+      "role_onboarding_tickets": {
+        "backend-developer": null,
+        "frontend-developer": null,
+        "tech-lead": null,
+        "db-architect": null,
+        "data-scientist": null,
+        "ui-ux-designer": null,
+        "qa-engineer": null
+      }
+    },
+    "github": {
+      "enabled": true,
+      "tech_lead": { "username": "sidious18" },
+      "branch_protection": {
+        "apply": false,
+        "pending": true,
+        "required_checks": ["lint", "typecheck", "test", "build"],
+        "linear_history": true,
+        "required_reviews": 1,
+        "dismiss_stale_reviews": true,
+        "require_code_owner_reviews": false,
+        "required_conversation_resolution": false
+      },
+      "rules": {
+        "issues": {
+          "format": "forms",
+          "types": ["bug", "feature", "task", "chore"],
+          "required_fields": ["title", "description", "acceptance_criteria", "severity"],
+          "auto_label_by_type": false,
+          "require_linked_jira": false
+        },
+        "prs": {
+          "require_jira_in_title": true,
+          "template_sections": ["Summary", "Changes", "Test Plan", "Linked Ticket"],
+          "auto_assign_codeowners": false,
+          "auto_label_by_path": false,
+          "allow_draft": true,
+          "require_conversations_resolved": false,
+          "block_merge_on_bad_title": false,
+          "ai_review": {
+            "provider": "none",
+            "model": null
+          }
+        }
+      },
+      "review_pr": null,
+      "initial_pr_created": false
+    },
+    "confluence": {
+      "enabled": true,
+      "local_fallback": false,
+      "local_path": "docs/confluence/",
+      "space_key": "SD",
+      "space_id": "163844",
+      "parent_page_id": "163956",
+      "pages_to_create": ["project-overview", "requirements", "technologies", "user-roles"],
+      "sync_on_edit": true,
+      "created_pages": {
+        "project-overview": { "id": "6225922", "url": "https://maksymleb18.atlassian.net/wiki/spaces/SD/pages/6225922/fleet-operations+Project+Overview" },
+        "requirements":     { "id": "6258689", "url": "https://maksymleb18.atlassian.net/wiki/spaces/SD/pages/6258689/fleet-operations+Requirements" },
+        "technologies":     { "id": "6291458", "url": "https://maksymleb18.atlassian.net/wiki/spaces/SD/pages/6291458/fleet-operations+Technologies" },
+        "user-roles":       { "id": "6422529", "url": "https://maksymleb18.atlassian.net/wiki/spaces/SD/pages/6422529/fleet-operations+User+Roles" }
+      }
+    },
+    "ide_mcp": {
+      "enabled": true
+    },
+    "deployment": {
+      "target": "vercel",
+      "managed_services": {
+        "compute": "vercel",
+        "data": ["supabase-postgres", "clickhouse-cloud"],
+        "messaging": [],
+        "edge": ["vercel-edge"],
+        "secrets": "vercel-env"
+      },
+      "automation": false,
+      "ci_pipeline": null,
+      "environments": [],
+      "registry": null
+    }
+  },
+  "hooks": {
+    "framework": "husky-lint-staged",
+    "secret_scanning": "gitleaks",
+    "pre_push_checks": ["lint", "typecheck"]
+  },
+  "docs_media": [
+    {
+      "source": "ai-instructions/requirements/fleet_mockup.html",
+      "destination": "docs/requirements/fleet_mockup.html",
+      "type": "html",
+      "role": "html-prototype",
+      "label": "Fleet operations interactive mockup",
+      "rendered_screens": [],
+      "renders_skipped_reason": "playwright-chromium-not-installed",
+      "referenced_by": []
+    },
+    {
+      "source": "ai-instructions/requirements/fleet_operations_spec.md",
+      "destination": "docs/requirements/fleet_operations_spec.md",
+      "type": "markdown",
+      "role": "requirement-narrative",
+      "label": "Fleet operations — product specification",
+      "referenced_by": []
+    },
+    {
+      "source": "ai-instructions/requirements/README.md",
+      "destination": "docs/requirements/README.md",
+      "type": "markdown",
+      "role": "requirement-narrative",
+      "label": "Requirements bundle README",
+      "referenced_by": []
+    }
+  ],
+  "docs_imagery": { "ui": [], "architecture": [] },
+  "docs_requirements": [
+    {
+      "source": "ai-instructions/requirements/fleet_mockup.html",
+      "destination": "docs/requirements/fleet_mockup.html",
+      "rewritten_refs": [],
+      "referenced_by": []
+    },
+    {
+      "source": "ai-instructions/requirements/fleet_operations_spec.md",
+      "destination": "docs/requirements/fleet_operations_spec.md",
+      "rewritten_refs": [],
+      "referenced_by": []
+    },
+    {
+      "source": "ai-instructions/requirements/README.md",
+      "destination": "docs/requirements/README.md",
+      "rewritten_refs": [],
+      "referenced_by": []
+    }
+  ],
+  "ci": { "provider": null, "jobs": [] },
+  "dependencies": { "automation": null },
+  "releases": { "automation": null, "workflow": null },
+  "license": null,
+  "docs": ["onboarding", "gitflow", "role-docs", "conventions"],
+  "team_roles": [
+    { "name": "backend-developer", "display": "Backend Developer", "onboarding_doc": true },
+    { "name": "frontend-developer", "display": "Frontend Developer", "onboarding_doc": true },
+    { "name": "tech-lead", "display": "Tech Lead", "onboarding_doc": true },
+    { "name": "db-architect", "display": "DB Architect", "onboarding_doc": true },
+    { "name": "data-scientist", "display": "Data Scientist", "onboarding_doc": true },
+    { "name": "ui-ux-designer", "display": "UI/UX Designer", "onboarding_doc": true },
+    { "name": "qa-engineer", "display": "QA Engineer", "onboarding_doc": true }
+  ],
+  "onboarding": {
+    "support_channels": null
+  }
+}

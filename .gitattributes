@@ -1,0 +1,43 @@
+# Default to LF line endings
+* text=auto eol=lf
+
+# Source code
+*.ts    text eol=lf
+*.tsx   text eol=lf
+*.js    text eol=lf
+*.jsx   text eol=lf
+*.mjs   text eol=lf
+*.cjs   text eol=lf
+*.json  text eol=lf
+*.svelte text eol=lf
+*.html  text eol=lf
+*.css   text eol=lf
+*.scss  text eol=lf
+*.md    text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.toml  text eol=lf
+*.sh    text eol=lf
+Dockerfile text eol=lf
+
+# Lockfiles — collapse in diffs
+package-lock.json  -diff linguist-generated=true
+pnpm-lock.yaml     -diff linguist-generated=true
+yarn.lock          -diff linguist-generated=true
+
+# Binary
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.webp binary
+*.pdf  binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.otf   binary
+
+# LFS hints for any future large binaries (commented; uncomment when adding LFS)
+# *.psd filter=lfs diff=lfs merge=lfs -text
+# *.fig filter=lfs diff=lfs merge=lfs -text

@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+# Skip if no module sources exist yet (pre-/tmpl-release-new state)
+any=0
+for p in src/backend src/frontend; do
+  if [ -d "$p" ]; then any=1; break; fi
+done
+
+if [ "$any" = "0" ]; then
+  echo "No module sources found yet — skipping lint-staged."
+else
+  npx lint-staged
+fi
+
+# Secret scanning — always runs (git history exists from first commit)
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks protect --staged --no-banner --redact --config=.gitleaks.toml
+else
+  echo "gitleaks not installed — skipping secret scan. Install: brew install gitleaks"
+fi

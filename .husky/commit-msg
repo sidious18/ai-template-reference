@@ -1,0 +1,17 @@
+#!/usr/bin/env sh
+# Conventional Commits validation
+npx --no -- commitlint --edit "$1"
+
+# Jira ticket enforcement (KAN-{N}) — only on feature/chore/fix branches
+branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
+case "$branch" in
+  main|HEAD|release-please--*)
+    exit 0
+    ;;
+esac
+
+# Accept either KAN-N in subject OR a release-please auto-message
+if ! grep -qE '(KAN-[0-9]+|chore: release [0-9]+\.[0-9]+\.[0-9]+)' "$1"; then
+  echo "Commit message must reference a Jira ticket (KAN-{N}). Example: 'feat: KAN-42 add login screen'"
+  exit 1
+fi
