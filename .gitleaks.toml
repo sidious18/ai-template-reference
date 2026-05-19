@@ -1,0 +1,18 @@
+# gitleaks configuration for fleet-operations
+# Run locally: `gitleaks protect --staged --config=.gitleaks.toml`
+# Install:     `brew install gitleaks`
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Allowlist for test fixtures and template placeholders"
+paths = [
+  '''docs/requirements/.*''',
+  '''ai-instructions/templates/.*''',
+  '''\.gitleaks\.toml$''',
+]
+regexes = [
+  '''sk-ant-test-.*''',
+  '''ghp_test_.*''',
+]

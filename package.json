@@ -1,0 +1,25 @@
+{
+  "name": "fleet-operations",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Web application for fleet managers to monitor vehicles, drivers, and trip data through a customizable tile-based dashboard and a research workspace.",
+  "workspaces": [
+    "src/backend",
+    "src/frontend"
+  ],
+  "scripts": {
+    "prepare": "husky",
+    "lint": "if [ -d src/backend ] || [ -d src/frontend ]; then npm run lint --workspaces --if-present; else echo 'No module sources yet — skipping lint.'; fi",
+    "typecheck": "if [ -d src/backend ] || [ -d src/frontend ]; then npm run typecheck --workspaces --if-present; else echo 'No module sources yet — skipping typecheck.'; fi",
+    "test": "if [ -d src/backend ] || [ -d src/frontend ]; then npm run test --workspaces --if-present; else echo 'No module sources yet — skipping test.'; fi",
+    "build": "if [ -d src/backend ] || [ -d src/frontend ]; then npm run build --workspaces --if-present; else echo 'No module sources yet — skipping build.'; fi",
+    "format": "prettier --write \"**/*.{ts,svelte,js,json,md,yml,yaml}\""
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0",
+    "prettier": "^3.2.0"
+  }
+}

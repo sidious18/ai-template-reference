@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+# Skip if no module sources exist yet (pre-/tmpl-release-new state)
+any=0
+for p in src/backend src/frontend; do
+  if [ -d "$p" ]; then any=1; break; fi
+done
+
+if [ "$any" = "0" ]; then
+  echo "No module sources found yet — skipping pre-push checks."
+  exit 0
+fi
+
+npm run lint && npm run typecheck
